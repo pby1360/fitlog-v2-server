@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15 # PostgreSQL 15 버전 사용 (또는 최신)
+    container_name: fitlog-v2-db
+    restart: always
+    ports:
+      - "5432:5432" # 로컬 5432 포트를 컨테이너 5432 포트와 연결
+    environment:
+      POSTGRES_USER: fitlog_user # DB 사용자명
+      POSTGRES_PASSWORD: fitlog_password # DB 비밀번호
+      POSTGRES_DB: fitlog_v2_db # 생성할 데이터베이스 이름
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # 데이터 영속성을 위한 볼륨
+
+volumes:
+  postgres_data:
