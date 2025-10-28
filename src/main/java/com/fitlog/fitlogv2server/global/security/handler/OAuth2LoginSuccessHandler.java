@@ -50,8 +50,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 .orElseThrow(() -> new IllegalArgumentException("OAuth2 인증 후 사용자를 찾을 수 없습니다."));
 
         // 5. Access Token, Refresh Token 생성
-        String accessToken = tokenProvider.createAccessToken(email, member.getRole());
-        String refreshToken = tokenProvider.createRefreshToken(email, member.getRole());
+        String accessToken = tokenProvider.createAccessToken(member.getId(), email, member.getNickname(), member.getRole());
+        String refreshToken = tokenProvider.createRefreshToken(member.getId(), email, member.getNickname(), member.getRole());
 
         // [!] (중요) Refresh Token은 DB에 저장해야 함 (지금은 생략, 추후 구현)
         // member.updateRefreshToken(refreshToken);

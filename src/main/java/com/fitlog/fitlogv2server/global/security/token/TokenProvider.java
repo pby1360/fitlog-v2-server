@@ -30,22 +30,24 @@ public class TokenProvider {
     }
 
     // [1] Access Token 생성
-    public String createAccessToken(String email, Role role) {
-        return createToken(email, role, accessTokenExpiry);
+    public String createAccessToken(Long memberId, String email, String nickname, Role role) {
+        return createToken(memberId, email, nickname, role, accessTokenExpiry);
     }
 
     // [2] Refresh Token 생성
-    public String createRefreshToken(String email, Role role) {
-        return createToken(email, role, refreshTokenExpiry);
+    public String createRefreshToken(Long memberId, String email, String nickname, Role role) {
+        return createToken(memberId, email, nickname, role, refreshTokenExpiry);
     }
 
     // [3] 토큰 생성 공통 로직
-    private String createToken(String email, Role role, long expiry) {
+    private String createToken(Long memberId, String email, String nickname, Role role, long expiry) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiry);
 
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(String.valueOf(memberId)) // memberId를 subject로 사용
+                .claim("email", email)
+                .claim("nickname", nickname)
                 .claim("role", role.getKey()) // 사용자 권한
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
@@ -53,23 +55,28 @@ public class TokenProvider {
                 .compact();
     }
 
-    // [4] 토큰에서 이메일(Subject) 추출 (API 인증 시 사용)
+    // [수정] getEmailFromToken을 getClaims를 사용하도록 변경
     public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
+        return getClaims(token).getSubject();
+    }
+
+    // [신규] 토큰에서 Claims(정보 단위)를 추출하는 메서드
+    public Claims getClaims(String token) {
+        return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.getSubject();
     }
 
-    // [5] 토큰 유효성 검증 (API 인증 시 사용)
+    // [수정] validateToken (기존 메서드)
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             // (log) MalformedJwtException, ExpiredJwtException 등
+            // log.warn("Invalid JWT token: {}", e.getMessage());
             return false;
         }
     }

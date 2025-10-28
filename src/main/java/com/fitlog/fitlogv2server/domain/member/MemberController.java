@@ -1,7 +1,11 @@
 package com.fitlog.fitlogv2server.domain.member;
 
+import com.fitlog.fitlogv2server.domain.member.dto.MemberResponseDto;
+import com.fitlog.fitlogv2server.domain.member.entity.Member;
+import com.fitlog.fitlogv2server.global.security.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,9 +27,9 @@ public class MemberController {
      * }
      */
     @GetMapping("/me")
-    public ResponseEntity<String> getMyInfo() {
-        // [!] 로그인 기능 구현 전 임시 응답
-        return ResponseEntity.ok("내 정보 조회 API (로그인 구현 필요)");
+    public ResponseEntity<MemberResponseDto> getMyInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Member member = memberService.findMemberById(userDetails.getId());
+        return ResponseEntity.ok(new MemberResponseDto(member));
     }
 
     /**
