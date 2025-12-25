@@ -1,7 +1,8 @@
-package com.fitlog.fitlogv2server.domain.member;
+package com.fitlog.fitlogv2server.domain.member.controller;
 
 import com.fitlog.fitlogv2server.domain.member.dto.MemberResponseDto;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
+import com.fitlog.fitlogv2server.domain.member.service.MemberService;
 import com.fitlog.fitlogv2server.global.security.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

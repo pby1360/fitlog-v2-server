@@ -1,6 +1,6 @@
 package com.fitlog.fitlogv2server.global.security.service;
 
-import com.fitlog.fitlogv2server.domain.member.MemberRepository;
+import com.fitlog.fitlogv2server.domain.member.repository.MemberRepository;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.global.security.dto.OAuthAttributes;
 import lombok.RequiredArgsConstructor;

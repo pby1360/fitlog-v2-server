@@ -15,7 +15,6 @@ public class Member extends BaseTimeEntity { // 2번에서 만들 BaseTimeEntity
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "member_id")
     private Long id;
 
     @Column(nullable = false, unique = true)

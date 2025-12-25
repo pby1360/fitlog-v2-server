@@ -1,6 +1,7 @@
-package com.fitlog.fitlogv2server.domain.member;
+package com.fitlog.fitlogv2server.domain.member.service;
 
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
+import com.fitlog.fitlogv2server.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

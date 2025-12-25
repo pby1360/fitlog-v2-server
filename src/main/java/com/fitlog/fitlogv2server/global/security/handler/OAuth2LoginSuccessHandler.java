@@ -1,7 +1,8 @@
 package com.fitlog.fitlogv2server.global.security.handler;
 
-import com.fitlog.fitlogv2server.domain.member.MemberRepository;
+
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
+import com.fitlog.fitlogv2server.domain.member.repository.MemberRepository;
 import com.fitlog.fitlogv2server.global.security.dto.OAuthAttributes;
 import com.fitlog.fitlogv2server.global.security.token.TokenProvider;
 import jakarta.servlet.ServletException;
