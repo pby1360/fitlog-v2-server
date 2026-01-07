@@ -44,4 +44,14 @@ public class WorkoutService {
         return workoutRepository.findByName(name)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 운동입니다."));
     }
+
+    public WorkoutPart findWorkoutPartById(Long id) {
+        return workoutPartRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 운동 부위입니다."));
+    }
+
+    public Workout findWorkoutById(Long id) {
+        return workoutRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 운동입니다."));
+    }
 }

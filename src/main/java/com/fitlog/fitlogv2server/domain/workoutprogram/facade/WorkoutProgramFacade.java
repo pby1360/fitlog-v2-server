@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class WorkoutProgramFacade {
@@ -19,5 +21,10 @@ public class WorkoutProgramFacade {
     public void createWorkoutProgram(Long memberId, WorkoutProgramDto.Request requestDto) {
         Member member = memberService.findMemberById(memberId);
         workoutProgramService.createWorkoutProgram(requestDto, member);
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkoutProgramDto.Response> findAllPrograms(Long memberId) {
+        return workoutProgramService.findAllPrograms(memberId);
     }
 }

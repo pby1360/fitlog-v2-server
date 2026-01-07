@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // CORS Preflight 요청 허용
                         // /api/members/me 같은 인증 필요한 API
-                        .requestMatchers("/api/members/**", "/api/workout/**", "/api/workoutprogram/**", "/api/workoutroutine/**").authenticated() // [수정] 인증 필요 경로 명시
+                        .requestMatchers("/api/members/**", "/api/workout/**", "/api/workout-programs/**", "/api/workoutroutine/**").authenticated() // [수정] 인증 필요 경로 명시
                         // 그 외 모든 요청(로그인, 루트 등) 허용
                         .anyRequest().permitAll()
                 )

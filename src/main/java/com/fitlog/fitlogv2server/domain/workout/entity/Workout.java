@@ -7,6 +7,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "workout_name_part_id_unique",
+                        columnNames = {"name", "workout_part_id"}
+                )
+        }
+)
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
