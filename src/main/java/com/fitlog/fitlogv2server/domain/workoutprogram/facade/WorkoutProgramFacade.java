@@ -23,6 +23,18 @@ public class WorkoutProgramFacade {
         workoutProgramService.createWorkoutProgram(requestDto, member);
     }
 
+    @Transactional
+    public void updateWorkoutProgram(Long memberId, Long programId, WorkoutProgramDto.Request requestDto) {
+        Member member = memberService.findMemberById(memberId);
+        workoutProgramService.updateWorkoutProgram(programId, requestDto, member);
+    }
+
+    @Transactional
+    public void deleteWorkoutProgram(Long memberId, Long programId) {
+        Member member = memberService.findMemberById(memberId);
+        workoutProgramService.deleteWorkoutProgram(programId, member);
+    }
+
     @Transactional(readOnly = true)
     public List<WorkoutProgramDto.Response> findAllPrograms(Long memberId) {
         return workoutProgramService.findAllPrograms(memberId);

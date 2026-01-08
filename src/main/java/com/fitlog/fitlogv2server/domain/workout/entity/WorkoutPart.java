@@ -42,7 +42,12 @@ public class WorkoutPart {
     private List<Workout> workouts = new ArrayList<>();
 
     @Builder
-    public WorkoutPart(String name) {
+    public WorkoutPart(String name, Member member) {
+        this.name = name;
+        this.member = member;
+    }
+
+    public void updateName(String name) {
         this.name = name;
     }
 }

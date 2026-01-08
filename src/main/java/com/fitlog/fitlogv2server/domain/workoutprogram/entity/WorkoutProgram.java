@@ -38,4 +38,9 @@ public class WorkoutProgram extends BaseTimeEntity {
         this.name = name;
         this.description = description;
     }
+
+    public void update(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
 }

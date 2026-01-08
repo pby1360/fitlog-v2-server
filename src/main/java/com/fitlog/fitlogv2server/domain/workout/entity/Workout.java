@@ -67,4 +67,9 @@ public class Workout {
             workoutPart.getWorkouts().add(this);
         }
     }
+
+    public void update(String name, WorkoutPart workoutPart) {
+        this.name = name;
+        setWorkoutPart(workoutPart);
+    }
 }
