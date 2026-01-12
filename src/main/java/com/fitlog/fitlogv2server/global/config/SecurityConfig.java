@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.global.config;
 
+import com.fitlog.fitlogv2server.global.security.handler.JwtAuthenticationEntryPoint;
 import com.fitlog.fitlogv2server.global.security.handler.OAuth2LoginSuccessHandler;
 import com.fitlog.fitlogv2server.global.security.service.CustomOAuth2UserService;
 import com.fitlog.fitlogv2server.global.security.token.JwtAuthenticationFilter; // [추가]
@@ -26,6 +27,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter; // [추가]
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint; // [추가]
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -35,10 +37,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable) // [추가] 로그아웃 비활성화
 
                 // [2] 세션 정책: STATELESS (JWT 사용)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // [추가] 인증 예외 처리
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
 
                 // [3] API 경로별 권한 설정

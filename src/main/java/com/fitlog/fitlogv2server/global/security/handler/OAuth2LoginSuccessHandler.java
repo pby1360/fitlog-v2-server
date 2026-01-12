@@ -62,6 +62,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String targetUrl = UriComponentsBuilder.fromUriString(clientUrl + "/auth/callback") // 프론트의 콜백 URL
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
+                .queryParam("imageUrl", member.getImageUrl())
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
