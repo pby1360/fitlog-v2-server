@@ -1,0 +1,54 @@
+src/main/java/
+└── com.fitlog.fitlogv2server   // ⬅️ Base Package (Component Scan 시작 위치)
+│
+├── FitlogV2ServerApplication.java  // ⬅️ 메인 클래스 (@EnableJpaAuditing)
+│
+├── global                          // ⬅️ [중요] 도메인과 무관한 공통 코드
+│   ├── common
+│   │   └── BaseTimeEntity.java     // ⬅️ (이동) 공통 시간 엔티티
+│   ├── config                      // ⬅️ SecurityConfig, WebConfig(CORS) 등
+│   │   └── JpaConfig.java          // ⬅️ (@EnableJpaAuditing을 여기로 옮겨도 됨)
+│   ├── exception                   // ⬅️ GlobalExceptionHandler, 커스텀 예외
+│   ├── security                    // ⬅️ (또는 auth) OAuth2, JWT 관련 로직
+│   │   ├── handler                 // ⬅️ OAuth2SuccessHandler
+│   │   ├── service                 // ⬅️ CustomOAuth2UserService
+│   │   └── token                   // ⬅️ TokenProvider (JWT 생성/검증)
+│   └── util                        // ⬅️ 공통 유틸리티 클래스
+│
+└── domain                          // ⬅️ [중요] 핵심 비즈니스 로직
+│
+├── member                      // ⬅️ 1. 회원 도메인
+│   ├── MemberController.java
+│   ├── MemberService.java
+│   ├── MemberRepository.java
+│   ├── entity                  // ⬅️ 엔티티는 domain/xxx/entity 에 위치
+│   │   ├── Member.java         // ⬅️ (이동)
+│   │   ├── Role.java           // ⬅️ (이동)
+│   │   └── Provider.java       // ⬅️ (이동)
+│   └── dto
+│       ├── MemberResponseDto.java
+│       └── MemberUpdateRequestDto.java
+│
+├── workout                     // ⬅️ 2. 운동 마스터 데이터 (스쿼트, 벤치프레스 등)
+│   ├── WorkoutController.java
+│   ├── WorkoutService.java
+│   ├── WorkoutRepository.java
+│   └── entity
+│       ├── Workout.java
+│       └── WorkoutPart.java    // (가슴, 등, 어깨...)
+│
+├── workoutprogram              // ⬅️ 3. 운동 프로그램 (템플릿)
+│   ├── WorkoutProgramController.java
+│   ├── WorkoutProgramService.java
+│   ├── WorkoutProgramRepository.java
+│   └── entity
+│       ├── WorkoutProgram.java
+│       └── WorkoutProgramItem.java
+│
+└── workoutroutine              // ⬅️ 4. 오늘의 운동 (일지)
+├── WorkoutRoutineController.java
+├── WorkoutRoutineService.java
+├── WorkoutRoutineRepository.java
+└── entity
+├── WorkoutRoutine.java
+└── WorkoutRoutineSet.java // ⬅️ v2(AI)를 위한 컬럼이 포함될 곳
