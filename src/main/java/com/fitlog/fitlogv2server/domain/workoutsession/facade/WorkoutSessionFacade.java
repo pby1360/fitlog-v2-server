@@ -29,4 +29,28 @@ public class WorkoutSessionFacade {
         return workoutSessionService.getLatestInProgressSession(memberId)
                 .map(WorkoutSessionDto.Response::new);
     }
+
+    @Transactional
+    public WorkoutSessionDto.Response completeSet(Long memberId, Long sessionId, WorkoutSessionDto.CompleteSetRequest request) {
+        WorkoutSession workoutSession = workoutSessionService.completeSet(memberId, sessionId, request);
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
+
+    @Transactional
+    public WorkoutSessionDto.Response pauseSession(Long memberId, Long sessionId) {
+        WorkoutSession workoutSession = workoutSessionService.pauseSession(memberId, sessionId);
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
+
+    @Transactional
+    public WorkoutSessionDto.Response resumeSession(Long memberId, Long sessionId) {
+        WorkoutSession workoutSession = workoutSessionService.resumeSession(memberId, sessionId);
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
+
+    @Transactional
+    public WorkoutSessionDto.Response endSession(Long memberId, Long sessionId, WorkoutSessionDto.EndRequest request) {
+        WorkoutSession workoutSession = workoutSessionService.endSession(memberId, sessionId, request);
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
 }

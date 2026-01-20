@@ -50,8 +50,28 @@ public class WorkoutSession extends BaseTimeEntity {
         this.endTime = endTime;
         this.status = status;
     }
-    
+
     public void addWorkoutSessionExercise(WorkoutSessionExercise workoutSessionExercise) {
         this.workoutSessionExercises.add(workoutSessionExercise);
     }
+
+    public void updateStatus(SessionStatus status) {
+        this.status = status;
+    }
+
+    public void updateEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public void updateStatusAndEndTime(SessionStatus status, LocalDateTime endTime) {
+        this.status = status;
+        this.endTime = endTime;
+    }
+
+    public boolean isAllSetsCompleted() {
+        return this.workoutSessionExercises.stream()
+                .flatMap(exercise -> exercise.getWorkoutSessionSets().stream())
+                .allMatch(WorkoutSessionSet::getCompleted);
+    }
+
 }

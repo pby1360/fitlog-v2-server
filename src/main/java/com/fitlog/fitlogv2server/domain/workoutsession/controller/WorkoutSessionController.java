@@ -30,4 +30,39 @@ public class WorkoutSessionController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build());
     }
+
+    @PatchMapping("/{sessionId}/complete-set")
+    public ResponseEntity<WorkoutSessionDto.Response> completeSet(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody WorkoutSessionDto.CompleteSetRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.completeSet(userDetails.getId(), sessionId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{sessionId}/pause")
+    public ResponseEntity<WorkoutSessionDto.Response> pauseSession(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.pauseSession(userDetails.getId(), sessionId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{sessionId}/resume")
+    public ResponseEntity<WorkoutSessionDto.Response> resumeSession(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.resumeSession(userDetails.getId(), sessionId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{sessionId}/end")
+    public ResponseEntity<WorkoutSessionDto.Response> endSession(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody WorkoutSessionDto.EndRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.endSession(userDetails.getId(), sessionId, request);
+        return ResponseEntity.ok(response);
+    }
+
 }

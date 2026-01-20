@@ -17,4 +17,6 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
             "WHERE ws.member.id = :memberId AND ws.status = :status " +
             "ORDER BY ws.id DESC")
     Optional<WorkoutSession> findLatestInProgressSessionByMemberId(@Param("memberId") Long memberId, @Param("status") SessionStatus status);
+
+    Optional<WorkoutSession> findByIdAndMemberId(Long sessionId, Long memberId);
 }

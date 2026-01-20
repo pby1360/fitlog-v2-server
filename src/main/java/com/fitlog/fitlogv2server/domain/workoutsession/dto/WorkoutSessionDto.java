@@ -3,6 +3,7 @@ package com.fitlog.fitlogv2server.domain.workoutsession.dto;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSession;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSessionExercise;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSessionSet;
+import com.fitlog.fitlogv2server.domain.workoutsession.entity.SessionStatus;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,21 @@ public class WorkoutSessionDto {
     @Getter
     public static class StartRequest {
         private Long workoutProgramId;
+    }
+
+    @Getter
+    public static class CompleteSetRequest {
+        private Long workoutSessionExerciseId;
+        private Long workoutSessionSetId;
+        private Double actualWeight;
+        private Integer actualReps;
+        private String memo;
+    }
+
+    @Getter
+    public static class EndRequest {
+        private LocalDateTime endTime;
+        private SessionStatus status;
     }
 
     @Getter
@@ -69,6 +85,10 @@ public class WorkoutSessionDto {
         private int restTime;
         private String memo;
         private boolean completed;
+        private Double actualWeight;
+        private Integer actualReps;
+        private String actualMemo;
+        private java.time.LocalDateTime completedAt;
 
         public SetResponse(WorkoutSessionSet set) {
             this.id = set.getId();
@@ -78,6 +98,10 @@ public class WorkoutSessionDto {
             this.restTime = set.getRestTime();
             this.memo = set.getMemo();
             this.completed = set.getCompleted();
+            this.actualWeight = set.getActualWeight();
+            this.actualReps = set.getActualReps();
+            this.actualMemo = set.getActualMemo();
+            this.completedAt = set.getCompletedAt();
         }
     }
 }
