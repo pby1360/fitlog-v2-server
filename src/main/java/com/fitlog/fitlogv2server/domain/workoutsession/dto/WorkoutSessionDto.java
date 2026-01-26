@@ -6,7 +6,7 @@ import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSessionSet;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.SessionStatus;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,7 +30,7 @@ public class WorkoutSessionDto {
 
     @Getter
     public static class EndRequest {
-        private LocalDateTime endTime;
+        private ZonedDateTime endTime;
         private SessionStatus status;
     }
 
@@ -39,7 +39,7 @@ public class WorkoutSessionDto {
         private Long id;
         private Long workoutProgramId;
         private String workoutProgramName;
-        private LocalDateTime startTime;
+        private ZonedDateTime startTime;
         private String status;
         private List<ExerciseResponse> exercises;
 

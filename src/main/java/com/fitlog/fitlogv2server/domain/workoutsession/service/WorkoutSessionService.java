@@ -19,7 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Service
@@ -39,7 +40,7 @@ public class WorkoutSessionService {
         WorkoutSession workoutSession = WorkoutSession.builder()
                 .member(member)
                 .workoutProgram(workoutProgram)
-                .startTime(LocalDateTime.now())
+                .startTime(ZonedDateTime.now(ZoneOffset.UTC))
                 .status(SessionStatus.IN_PROGRESS)
                 .build();
 
@@ -93,7 +94,7 @@ public class WorkoutSessionService {
         workoutSessionSet.completeSet(request.getActualWeight(), request.getActualReps(), request.getMemo());
 
         if (workoutSession.isAllSetsCompleted()) {
-            workoutSession.updateStatusAndEndTime(SessionStatus.COMPLETED, LocalDateTime.now());
+            workoutSession.updateStatusAndEndTime(SessionStatus.COMPLETED, ZonedDateTime.now(ZoneOffset.UTC));
         }
 
         return workoutSession;

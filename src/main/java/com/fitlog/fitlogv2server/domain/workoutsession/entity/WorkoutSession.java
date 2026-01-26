@@ -9,7 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import org.hibernate.annotations.BatchSize;
@@ -31,9 +31,9 @@ public class WorkoutSession extends BaseTimeEntity {
     @JoinColumn(name = "workout_program_id")
     private WorkoutProgram workoutProgram;
 
-    private LocalDateTime startTime;
+    private ZonedDateTime startTime;
 
-    private LocalDateTime endTime;
+    private ZonedDateTime endTime;
 
     @Enumerated(EnumType.STRING)
     private SessionStatus status;
@@ -43,7 +43,7 @@ public class WorkoutSession extends BaseTimeEntity {
     private Set<WorkoutSessionExercise> workoutSessionExercises = new HashSet<>();
 
     @Builder
-    public WorkoutSession(Member member, WorkoutProgram workoutProgram, LocalDateTime startTime, LocalDateTime endTime, SessionStatus status) {
+    public WorkoutSession(Member member, WorkoutProgram workoutProgram, ZonedDateTime startTime, ZonedDateTime endTime, SessionStatus status) {
         this.member = member;
         this.workoutProgram = workoutProgram;
         this.startTime = startTime;
@@ -59,11 +59,11 @@ public class WorkoutSession extends BaseTimeEntity {
         this.status = status;
     }
 
-    public void updateEndTime(LocalDateTime endTime) {
+    public void updateEndTime(ZonedDateTime endTime) {
         this.endTime = endTime;
     }
 
-    public void updateStatusAndEndTime(SessionStatus status, LocalDateTime endTime) {
+    public void updateStatusAndEndTime(SessionStatus status, ZonedDateTime endTime) {
         this.status = status;
         this.endTime = endTime;
     }
