@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZonedDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,10 +30,10 @@ public class WorkoutSessionSet {
     private Double actualWeight;
     private Integer actualReps;
     private String actualMemo;
-    private java.time.LocalDateTime completedAt;
+    private ZonedDateTime completedAt;
 
     @Builder
-    public WorkoutSessionSet(WorkoutSessionExercise workoutSessionExercise, Integer setNumber, Double weight, Integer reps, Integer restTime, String memo, Boolean completed, Double actualWeight, Integer actualReps, String actualMemo, java.time.LocalDateTime completedAt) {
+    public WorkoutSessionSet(WorkoutSessionExercise workoutSessionExercise, Integer setNumber, Double weight, Integer reps, Integer restTime, String memo, Boolean completed, Double actualWeight, Integer actualReps, String actualMemo, ZonedDateTime completedAt) {
         this.workoutSessionExercise = workoutSessionExercise;
         this.setNumber = setNumber;
         this.weight = weight;
@@ -50,6 +52,6 @@ public class WorkoutSessionSet {
         this.actualReps = actualReps;
         this.actualMemo = actualMemo;
         this.completed = true;
-        this.completedAt = java.time.LocalDateTime.now();
+        this.completedAt = ZonedDateTime.now();
     }
 }

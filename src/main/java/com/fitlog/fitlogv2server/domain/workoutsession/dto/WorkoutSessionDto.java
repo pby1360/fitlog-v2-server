@@ -88,7 +88,7 @@ public class WorkoutSessionDto {
         private Double actualWeight;
         private Integer actualReps;
         private String actualMemo;
-        private java.time.LocalDateTime completedAt;
+        private ZonedDateTime completedAt;
 
         public SetResponse(WorkoutSessionSet set) {
             this.id = set.getId();
