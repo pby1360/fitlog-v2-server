@@ -1,0 +1,59 @@
+spring:
+  sql:
+    init:
+      mode: never
+  application:
+    name: fitlog-v2-server
+
+  # --- DB 설정 (로컬 PostgreSQL 사용 예시, Docker Compose로도 구성 가능) ---
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  # --- JPA (Hibernate) 설정 ---
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_post # 클라이언트 인증 방식 (예: client_secret_post)
+            scope:
+              - profile_nickname
+              - profile_image
+              - account_email
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id # 사용자 정보에서 고유 식별자로 사용할 속성 이름
+
+  # --- JWT 설정: 토큰 서명 비밀키와 만료 시간 ---
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiry: 3600 # 액세스 토큰 만료시간(초) 예: 3600 = 1시간
+  refresh-token-expiry: 604800 # 리프레시 토큰 만료시간(초) 예: 604800 = 7일
+
+# --- 앱 관련 설정: 프론트엔드 URL 등 (CORS, 리디렉션 용) ---
+app:
+  client-url: ${FRONTEND_URL:http://localhost:3000}
+
+# --- 배포 필수 설정 ---
+server:
+  port: ${PORT:8080} # Render가 동적으로 할당하는 포트를 받기 위해 필수
+  forward-headers-strategy: native # OAuth2 리다이렉트 시 HTTPS 유지를 위해 필수
