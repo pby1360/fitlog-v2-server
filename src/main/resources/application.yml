@@ -46,7 +46,7 @@ spring:
   # --- JWT 설정: 토큰 서명 비밀키와 만료 시간 ---
 jwt:
   secret: ${JWT_SECRET}
-  access-token-expiry: 3600 # 액세스 토큰 만료시간(초) 예: 3600 = 1시간
+  access-token-expiry: ${ACCESS_TOKEN_EXPIRY:7200} # 액세스 토큰 만료시간(초) 예: 3600 = 1시간
   refresh-token-expiry: 604800 # 리프레시 토큰 만료시간(초) 예: 604800 = 7일
 
 # --- 앱 관련 설정: 프론트엔드 URL 등 (CORS, 리디렉션 용) ---
