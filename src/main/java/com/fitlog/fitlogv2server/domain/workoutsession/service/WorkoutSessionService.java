@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -77,7 +78,7 @@ public class WorkoutSessionService {
 
     @Transactional(readOnly = true)
     public Optional<WorkoutSession> getLatestInProgressSession(Long memberId) {
-        return workoutSessionRepository.findLatestInProgressSessionByMemberId(memberId, SessionStatus.IN_PROGRESS);
+        return workoutSessionRepository.findLatestWorkoutSessionByMemberIdAndStatuses(memberId, Set.of(SessionStatus.IN_PROGRESS, SessionStatus.PAUSED));
     }
 
     @Transactional
@@ -106,7 +107,7 @@ public class WorkoutSessionService {
         if (workoutSession.getStatus() == SessionStatus.PAUSED) {
             throw new IllegalStateException("Workout session is already paused.");
         }
-        workoutSession.updateStatus(SessionStatus.PAUSED);
+        workoutSession.pause(ZonedDateTime.now(ZoneOffset.UTC));
         return workoutSession;
     }
 
@@ -116,7 +117,7 @@ public class WorkoutSessionService {
         if (workoutSession.getStatus() == SessionStatus.IN_PROGRESS) {
             throw new IllegalStateException("Workout session is already in progress.");
         }
-        workoutSession.updateStatus(SessionStatus.IN_PROGRESS);
+        workoutSession.resume(ZonedDateTime.now(ZoneOffset.UTC));
         return workoutSession;
     }
 

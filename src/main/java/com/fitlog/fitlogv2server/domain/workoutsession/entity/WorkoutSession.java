@@ -35,6 +35,10 @@ public class WorkoutSession extends BaseTimeEntity {
 
     private ZonedDateTime endTime;
 
+    private ZonedDateTime lastPausedAt;
+
+    private Long totalPausedSeconds = 0L;
+
     @Enumerated(EnumType.STRING)
     private SessionStatus status;
 
@@ -49,10 +53,27 @@ public class WorkoutSession extends BaseTimeEntity {
         this.startTime = startTime;
         this.endTime = endTime;
         this.status = status;
+        this.totalPausedSeconds = 0L;
     }
 
     public void addWorkoutSessionExercise(WorkoutSessionExercise workoutSessionExercise) {
         this.workoutSessionExercises.add(workoutSessionExercise);
+    }
+
+    public void pause(ZonedDateTime pausedAt) {
+        if (this.status == SessionStatus.IN_PROGRESS) {
+            this.status = SessionStatus.PAUSED;
+            this.lastPausedAt = pausedAt;
+        }
+    }
+
+    public void resume(ZonedDateTime resumedAt) {
+        if (this.status == SessionStatus.PAUSED && this.lastPausedAt != null) {
+            long pausedSeconds = java.time.Duration.between(this.lastPausedAt, resumedAt).getSeconds();
+            this.totalPausedSeconds = (this.totalPausedSeconds == null ? 0L : this.totalPausedSeconds) + pausedSeconds;
+            this.status = SessionStatus.IN_PROGRESS;
+            this.lastPausedAt = null;
+        }
     }
 
     public void updateStatus(SessionStatus status) {
