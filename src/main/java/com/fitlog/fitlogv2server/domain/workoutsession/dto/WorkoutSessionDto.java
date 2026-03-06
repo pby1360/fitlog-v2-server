@@ -36,6 +36,44 @@ public class WorkoutSessionDto {
     }
 
     @Getter
+    public static class SkipExerciseRequest {
+        private Long workoutSessionExerciseId;
+        private Boolean skipped;
+    }
+
+    @Getter
+    public static class ReorderExercisesRequest {
+        private List<ExerciseOrderItem> exercises;
+    }
+
+    @Getter
+    public static class ExerciseOrderItem {
+        private Long workoutSessionExerciseId;
+        private Integer order;
+    }
+
+    @Getter
+    public static class AddExerciseRequest {
+        private Long workoutId;
+        private Integer order;
+        private List<AddSetRequest> sets;
+    }
+
+    @Getter
+    public static class AddSetRequest {
+        private Integer setNumber;
+        private Double weight;
+        private Integer reps;
+        private Integer restTime;
+        private String memo;
+    }
+
+    @Getter
+    public static class RemoveExerciseRequest {
+        private Long workoutSessionExerciseId;
+    }
+
+    @Getter
     public static class Response {
         private Long id;
         private Long workoutProgramId;
@@ -66,6 +104,7 @@ public class WorkoutSessionDto {
         private String workoutName;
         private String bodyPart;
         private int order;
+        private boolean skipped;
         private List<SetResponse> sets;
 
         public ExerciseResponse(WorkoutSessionExercise exercise) {
@@ -74,6 +113,7 @@ public class WorkoutSessionDto {
             this.workoutName = exercise.getWorkout().getName();
             this.bodyPart = exercise.getWorkout().getWorkoutPart().getName();
             this.order = exercise.getOrder();
+            this.skipped = exercise.getSkipped();
             this.sets = exercise.getWorkoutSessionSets().stream()
                     .sorted(Comparator.comparing(WorkoutSessionSet::getSetNumber))
                     .map(SetResponse::new)

@@ -60,6 +60,42 @@ public class WorkoutSessionController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{sessionId}/skip-exercise")
+    public ResponseEntity<WorkoutSessionDto.Response> skipExercise(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody WorkoutSessionDto.SkipExerciseRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.skipExercise(userDetails.getId(), sessionId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{sessionId}/reorder-exercises")
+    public ResponseEntity<WorkoutSessionDto.Response> reorderExercises(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody WorkoutSessionDto.ReorderExercisesRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.reorderExercises(userDetails.getId(), sessionId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{sessionId}/exercises")
+    public ResponseEntity<WorkoutSessionDto.Response> addExercise(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody WorkoutSessionDto.AddExerciseRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.addExercise(userDetails.getId(), sessionId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{sessionId}/exercises/{exerciseId}")
+    public ResponseEntity<WorkoutSessionDto.Response> removeExercise(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @PathVariable Long exerciseId) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.removeExercise(userDetails.getId(), sessionId, exerciseId);
+        return ResponseEntity.ok(response);
+    }
+
     @PatchMapping("/{sessionId}/end")
     public ResponseEntity<WorkoutSessionDto.Response> endSession(
             @AuthenticationPrincipal CustomUserDetails userDetails,

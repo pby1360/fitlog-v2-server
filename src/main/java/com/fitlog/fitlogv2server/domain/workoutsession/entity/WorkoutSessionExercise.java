@@ -31,8 +31,11 @@ public class WorkoutSessionExercise {
     @Column(name = "`order`")
     private Integer order;
 
+    @Column(nullable = false)
+    private Boolean skipped = false;
+
     @BatchSize(size = 100)
-    @OneToMany(mappedBy = "workoutSessionExercise", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "workoutSessionExercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<WorkoutSessionSet> workoutSessionSets = new HashSet<>();
 
     @Builder
@@ -40,9 +43,22 @@ public class WorkoutSessionExercise {
         this.workoutSession = workoutSession;
         this.workout = workout;
         this.order = order;
+        this.skipped = false;
     }
 
     public void addWorkoutSessionSet(WorkoutSessionSet workoutSessionSet) {
         this.workoutSessionSets.add(workoutSessionSet);
+    }
+
+    public void skip() {
+        this.skipped = true;
+    }
+
+    public void unskip() {
+        this.skipped = false;
+    }
+
+    public void updateOrder(int order) {
+        this.order = order;
     }
 }

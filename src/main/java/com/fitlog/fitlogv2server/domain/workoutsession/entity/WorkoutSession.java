@@ -91,8 +91,13 @@ public class WorkoutSession extends BaseTimeEntity {
 
     public boolean isAllSetsCompleted() {
         return this.workoutSessionExercises.stream()
+                .filter(exercise -> !exercise.getSkipped())
                 .flatMap(exercise -> exercise.getWorkoutSessionSets().stream())
                 .allMatch(WorkoutSessionSet::getCompleted);
+    }
+
+    public void removeWorkoutSessionExercise(WorkoutSessionExercise exercise) {
+        this.workoutSessionExercises.remove(exercise);
     }
 
 }

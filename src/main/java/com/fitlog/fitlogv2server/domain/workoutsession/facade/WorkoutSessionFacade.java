@@ -56,6 +56,30 @@ public class WorkoutSessionFacade {
         return new WorkoutSessionDto.Response(workoutSession);
     }
 
+    @Transactional
+    public WorkoutSessionDto.Response skipExercise(Long memberId, Long sessionId, WorkoutSessionDto.SkipExerciseRequest request) {
+        WorkoutSession workoutSession = workoutSessionService.skipExercise(memberId, sessionId, request);
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
+
+    @Transactional
+    public WorkoutSessionDto.Response reorderExercises(Long memberId, Long sessionId, WorkoutSessionDto.ReorderExercisesRequest request) {
+        WorkoutSession workoutSession = workoutSessionService.reorderExercises(memberId, sessionId, request);
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
+
+    @Transactional
+    public WorkoutSessionDto.Response addExercise(Long memberId, Long sessionId, WorkoutSessionDto.AddExerciseRequest request) {
+        WorkoutSession workoutSession = workoutSessionService.addExercise(memberId, sessionId, request);
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
+
+    @Transactional
+    public WorkoutSessionDto.Response removeExercise(Long memberId, Long sessionId, Long workoutSessionExerciseId) {
+        WorkoutSession workoutSession = workoutSessionService.removeExercise(memberId, sessionId, workoutSessionExerciseId);
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
+
     @Transactional(readOnly = true)
     public Page<WorkoutSessionDto.LogSummaryResponse> getWorkoutLog(Long memberId, Pageable pageable) {
         return workoutSessionService.getCompletedSessions(memberId, pageable)
