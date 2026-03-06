@@ -19,6 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -126,6 +129,17 @@ public class WorkoutSessionService {
         WorkoutSession workoutSession = findWorkoutSessionByIdAndMemberId(sessionId, memberId);
         workoutSession.updateStatusAndEndTime(request.getStatus(), request.getEndTime());
         return workoutSession;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<WorkoutSession> getCompletedSessions(Long memberId, Pageable pageable) {
+        return workoutSessionRepository.findAllByMemberIdAndStatus(memberId, SessionStatus.COMPLETED, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public WorkoutSession getSessionDetail(Long memberId, Long sessionId) {
+        return workoutSessionRepository.findDetailByIdAndMemberId(sessionId, memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Workout session not found or does not belong to the member"));
     }
 
     private WorkoutSession findWorkoutSessionByIdAndMemberId(Long sessionId, Long memberId) {

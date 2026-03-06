@@ -4,6 +4,10 @@ import com.fitlog.fitlogv2server.domain.workoutsession.dto.WorkoutSessionDto;
 import com.fitlog.fitlogv2server.domain.workoutsession.facade.WorkoutSessionFacade;
 import com.fitlog.fitlogv2server.global.security.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -62,6 +66,22 @@ public class WorkoutSessionController {
             @PathVariable Long sessionId,
             @RequestBody WorkoutSessionDto.EndRequest request) {
         WorkoutSessionDto.Response response = workoutSessionFacade.endSession(userDetails.getId(), sessionId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/log")
+    public ResponseEntity<Page<WorkoutSessionDto.LogSummaryResponse>> getWorkoutLog(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<WorkoutSessionDto.LogSummaryResponse> response = workoutSessionFacade.getWorkoutLog(userDetails.getId(), pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{sessionId}")
+    public ResponseEntity<WorkoutSessionDto.Response> getSessionDetail(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.getSessionDetail(userDetails.getId(), sessionId);
         return ResponseEntity.ok(response);
     }
 

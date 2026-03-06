@@ -6,6 +6,7 @@ import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSessionSet;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.SessionStatus;
 import lombok.Getter;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -40,6 +41,7 @@ public class WorkoutSessionDto {
         private Long workoutProgramId;
         private String workoutProgramName;
         private ZonedDateTime startTime;
+        private ZonedDateTime endTime;
         private String status;
         private List<ExerciseResponse> exercises;
 
@@ -48,6 +50,7 @@ public class WorkoutSessionDto {
             this.workoutProgramId = workoutSession.getWorkoutProgram().getId();
             this.workoutProgramName = workoutSession.getWorkoutProgram().getName();
             this.startTime = workoutSession.getStartTime();
+            this.endTime = workoutSession.getEndTime();
             this.status = workoutSession.getStatus().name();
             this.exercises = workoutSession.getWorkoutSessionExercises().stream()
                     .sorted(Comparator.comparing(WorkoutSessionExercise::getOrder))
@@ -73,6 +76,30 @@ public class WorkoutSessionDto {
                     .sorted(Comparator.comparing(WorkoutSessionSet::getSetNumber))
                     .map(SetResponse::new)
                     .collect(Collectors.toList());
+        }
+    }
+
+    @Getter
+    public static class LogSummaryResponse {
+        private Long id;
+        private Long workoutProgramId;
+        private String workoutProgramName;
+        private ZonedDateTime startTime;
+        private ZonedDateTime endTime;
+        private Long durationSeconds;
+        private String status;
+
+        public LogSummaryResponse(WorkoutSession workoutSession) {
+            this.id = workoutSession.getId();
+            this.workoutProgramId = workoutSession.getWorkoutProgram().getId();
+            this.workoutProgramName = workoutSession.getWorkoutProgram().getName();
+            this.startTime = workoutSession.getStartTime();
+            this.endTime = workoutSession.getEndTime();
+            this.durationSeconds = (workoutSession.getStartTime() != null && workoutSession.getEndTime() != null)
+                    ? Duration.between(workoutSession.getStartTime(), workoutSession.getEndTime()).getSeconds()
+                            - (workoutSession.getTotalPausedSeconds() != null ? workoutSession.getTotalPausedSeconds() : 0L)
+                    : null;
+            this.status = workoutSession.getStatus().name();
         }
     }
 
