@@ -127,6 +127,30 @@ public class WorkoutSessionDto {
     }
 
     @Getter
+    public static class LogSummaryResponse {
+        private Long id;
+        private Long workoutProgramId;
+        private String workoutProgramName;
+        private ZonedDateTime startTime;
+        private ZonedDateTime endTime;
+        private Long durationSeconds;
+        private String status;
+
+        public LogSummaryResponse(WorkoutSession workoutSession) {
+            this.id = workoutSession.getId();
+            this.workoutProgramId = workoutSession.getWorkoutProgram().getId();
+            this.workoutProgramName = workoutSession.getWorkoutProgram().getName();
+            this.startTime = workoutSession.getStartTime();
+            this.endTime = workoutSession.getEndTime();
+            this.durationSeconds = (workoutSession.getStartTime() != null && workoutSession.getEndTime() != null)
+                    ? Duration.between(workoutSession.getStartTime(), workoutSession.getEndTime()).getSeconds()
+                            - (workoutSession.getTotalPausedSeconds() != null ? workoutSession.getTotalPausedSeconds() : 0L)
+                    : null;
+            this.status = workoutSession.getStatus().name();
+        }
+    }
+
+    @Getter
     public static class SetResponse {
         private Long id;
         private int setNumber;
