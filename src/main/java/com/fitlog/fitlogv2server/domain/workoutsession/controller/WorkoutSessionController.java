@@ -69,7 +69,7 @@ public class WorkoutSessionController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/log")
+    @GetMapping("/logs")
     public ResponseEntity<Page<WorkoutSessionDto.LogSummaryResponse>> getWorkoutLog(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -77,7 +77,7 @@ public class WorkoutSessionController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{sessionId}")
+    @GetMapping("/logs/{sessionId}")
     public ResponseEntity<WorkoutSessionDto.Response> getSessionDetail(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long sessionId) {
