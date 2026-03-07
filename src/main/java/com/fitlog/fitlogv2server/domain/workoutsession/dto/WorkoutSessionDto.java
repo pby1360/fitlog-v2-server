@@ -6,6 +6,7 @@ import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSessionSet;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.SessionStatus;
 import lombok.Getter;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -40,6 +41,7 @@ public class WorkoutSessionDto {
         private Long workoutProgramId;
         private String workoutProgramName;
         private ZonedDateTime startTime;
+        private ZonedDateTime endTime;
         private String status;
         private List<ExerciseResponse> exercises;
 
@@ -48,6 +50,7 @@ public class WorkoutSessionDto {
             this.workoutProgramId = workoutSession.getWorkoutProgram().getId();
             this.workoutProgramName = workoutSession.getWorkoutProgram().getName();
             this.startTime = workoutSession.getStartTime();
+            this.endTime = workoutSession.getEndTime();
             this.status = workoutSession.getStatus().name();
             this.exercises = workoutSession.getWorkoutSessionExercises().stream()
                     .sorted(Comparator.comparing(WorkoutSessionExercise::getOrder))
@@ -61,6 +64,7 @@ public class WorkoutSessionDto {
         private Long id;
         private Long workoutId;
         private String workoutName;
+        private String bodyPart;
         private int order;
         private List<SetResponse> sets;
 
@@ -68,10 +72,56 @@ public class WorkoutSessionDto {
             this.id = exercise.getId();
             this.workoutId = exercise.getWorkout().getId();
             this.workoutName = exercise.getWorkout().getName();
+            this.bodyPart = exercise.getWorkout().getWorkoutPart().getName();
             this.order = exercise.getOrder();
             this.sets = exercise.getWorkoutSessionSets().stream()
                     .sorted(Comparator.comparing(WorkoutSessionSet::getSetNumber))
                     .map(SetResponse::new)
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Getter
+    public static class LogSummaryResponse {
+        private Long id;
+        private Long workoutProgramId;
+        private String workoutProgramName;
+        private ZonedDateTime startTime;
+        private ZonedDateTime endTime;
+        private Long durationSeconds;
+        private String status;
+        private int totalExercises;
+        private int completedExercises;
+        private int totalSets;
+        private int completedSets;
+        private List<String> bodyParts;
+
+        public LogSummaryResponse(WorkoutSession workoutSession) {
+            this.id = workoutSession.getId();
+            this.workoutProgramId = workoutSession.getWorkoutProgram().getId();
+            this.workoutProgramName = workoutSession.getWorkoutProgram().getName();
+            this.startTime = workoutSession.getStartTime();
+            this.endTime = workoutSession.getEndTime();
+            this.durationSeconds = (workoutSession.getStartTime() != null && workoutSession.getEndTime() != null)
+                    ? Duration.between(workoutSession.getStartTime(), workoutSession.getEndTime()).getSeconds()
+                            - (workoutSession.getTotalPausedSeconds() != null ? workoutSession.getTotalPausedSeconds() : 0L)
+                    : null;
+            this.status = workoutSession.getStatus().name();
+
+            List<WorkoutSessionExercise> exercises = new java.util.ArrayList<>(workoutSession.getWorkoutSessionExercises());
+            this.totalExercises = exercises.size();
+            this.completedExercises = (int) exercises.stream()
+                    .filter(e -> !e.getWorkoutSessionSets().isEmpty()
+                            && e.getWorkoutSessionSets().stream().allMatch(s -> Boolean.TRUE.equals(s.getCompleted())))
+                    .count();
+            this.totalSets = exercises.stream().mapToInt(e -> e.getWorkoutSessionSets().size()).sum();
+            this.completedSets = (int) exercises.stream()
+                    .flatMap(e -> e.getWorkoutSessionSets().stream())
+                    .filter(s -> Boolean.TRUE.equals(s.getCompleted()))
+                    .count();
+            this.bodyParts = exercises.stream()
+                    .map(e -> e.getWorkout().getWorkoutPart().getName())
+                    .distinct()
                     .collect(Collectors.toList());
         }
     }

@@ -6,6 +6,8 @@ import com.fitlog.fitlogv2server.domain.workoutsession.dto.WorkoutSessionDto;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSession;
 import com.fitlog.fitlogv2server.domain.workoutsession.service.WorkoutSessionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +53,18 @@ public class WorkoutSessionFacade {
     @Transactional
     public WorkoutSessionDto.Response endSession(Long memberId, Long sessionId, WorkoutSessionDto.EndRequest request) {
         WorkoutSession workoutSession = workoutSessionService.endSession(memberId, sessionId, request);
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<WorkoutSessionDto.LogSummaryResponse> getWorkoutLog(Long memberId, Pageable pageable) {
+        return workoutSessionService.getCompletedSessions(memberId, pageable)
+                .map(WorkoutSessionDto.LogSummaryResponse::new);
+    }
+
+    @Transactional(readOnly = true)
+    public WorkoutSessionDto.Response getSessionDetail(Long memberId, Long sessionId) {
+        WorkoutSession workoutSession = workoutSessionService.getSessionDetail(memberId, sessionId);
         return new WorkoutSessionDto.Response(workoutSession);
     }
 }
