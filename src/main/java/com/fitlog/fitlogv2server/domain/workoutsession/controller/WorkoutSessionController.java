@@ -4,7 +4,6 @@ import com.fitlog.fitlogv2server.domain.workoutsession.dto.WorkoutSessionDto;
 import com.fitlog.fitlogv2server.domain.workoutsession.facade.WorkoutSessionFacade;
 import com.fitlog.fitlogv2server.global.security.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -106,10 +105,10 @@ public class WorkoutSessionController {
     }
 
     @GetMapping("/logs")
-    public ResponseEntity<Page<WorkoutSessionDto.LogSummaryResponse>> getWorkoutLog(
+    public ResponseEntity<WorkoutSessionDto.LogPageResponse> getWorkoutLog(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<WorkoutSessionDto.LogSummaryResponse> response = workoutSessionFacade.getWorkoutLog(userDetails.getId(), pageable);
+        WorkoutSessionDto.LogPageResponse response = workoutSessionFacade.getWorkoutLog(userDetails.getId(), pageable);
         return ResponseEntity.ok(response);
     }
 

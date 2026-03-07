@@ -44,8 +44,8 @@ public class WorkoutSessionService {
     private final WorkoutRepository workoutRepository;
 
     @Transactional
-    public WorkoutSession startSession(Member member, Long workoutProgramId) {
-        WorkoutProgram workoutProgram = workoutProgramRepository.findById(workoutProgramId)
+    public WorkoutSession startSession(Member member, WorkoutSessionDto.StartRequest request) {
+        WorkoutProgram workoutProgram = workoutProgramRepository.findById(request.getWorkoutProgramId())
                 .orElseThrow(() -> new IllegalArgumentException("Workout program not found"));
 
         WorkoutSession workoutSession = WorkoutSession.builder()
@@ -55,30 +55,60 @@ public class WorkoutSessionService {
                 .status(SessionStatus.IN_PROGRESS)
                 .build();
 
-        int orderCounter = 1;
-        for (WorkoutProgramPart programPart : workoutProgram.getParts()) {
-            for (WorkoutProgramExercise programExercise : programPart.getExercises()) {
+        List<WorkoutSessionDto.CustomExerciseRequest> customExercises = request.getCustomExercises();
+        if (customExercises != null && !customExercises.isEmpty()) {
+            for (WorkoutSessionDto.CustomExerciseRequest customEx : customExercises) {
+                Workout workout = workoutRepository.findById(customEx.getWorkoutId())
+                        .orElseThrow(() -> new IllegalArgumentException("Workout not found: " + customEx.getWorkoutId()));
+
                 WorkoutSessionExercise sessionExercise = WorkoutSessionExercise.builder()
                         .workoutSession(workoutSession)
-                        .workout(programExercise.getWorkout())
-                        .order(orderCounter++)
+                        .workout(workout)
+                        .order(customEx.getOrder())
                         .build();
                 workoutSession.addWorkoutSessionExercise(sessionExercise);
 
-                for (WorkoutProgramSet programSet : programExercise.getSets()) {
-                    WorkoutSessionSet sessionSet = WorkoutSessionSet.builder()
-                            .workoutSessionExercise(sessionExercise)
-                            .setNumber(programSet.getSetNumber())
-                            .weight(programSet.getWeight())
-                            .reps(programSet.getReps())
-                            .restTime(programSet.getRestTime())
-                            .memo(programSet.getMemo())
-                            .completed(false)
-                            .actualWeight(null)
-                            .actualReps(null)
-                            .actualMemo(null)
+                if (customEx.getSets() != null) {
+                    for (WorkoutSessionDto.CustomSetRequest setReq : customEx.getSets()) {
+                        WorkoutSessionSet sessionSet = WorkoutSessionSet.builder()
+                                .workoutSessionExercise(sessionExercise)
+                                .setNumber(setReq.getSetNumber())
+                                .weight(setReq.getWeight())
+                                .reps(setReq.getReps())
+                                .restTime(setReq.getRestTime())
+                                .memo(setReq.getMemo())
+                                .completed(false)
+                                .build();
+                        sessionExercise.addWorkoutSessionSet(sessionSet);
+                    }
+                }
+            }
+        } else {
+            int orderCounter = 1;
+            for (WorkoutProgramPart programPart : workoutProgram.getParts()) {
+                for (WorkoutProgramExercise programExercise : programPart.getExercises()) {
+                    WorkoutSessionExercise sessionExercise = WorkoutSessionExercise.builder()
+                            .workoutSession(workoutSession)
+                            .workout(programExercise.getWorkout())
+                            .order(orderCounter++)
                             .build();
-                    sessionExercise.addWorkoutSessionSet(sessionSet);
+                    workoutSession.addWorkoutSessionExercise(sessionExercise);
+
+                    for (WorkoutProgramSet programSet : programExercise.getSets()) {
+                        WorkoutSessionSet sessionSet = WorkoutSessionSet.builder()
+                                .workoutSessionExercise(sessionExercise)
+                                .setNumber(programSet.getSetNumber())
+                                .weight(programSet.getWeight())
+                                .reps(programSet.getReps())
+                                .restTime(programSet.getRestTime())
+                                .memo(programSet.getMemo())
+                                .completed(false)
+                                .actualWeight(null)
+                                .actualReps(null)
+                                .actualMemo(null)
+                                .build();
+                        sessionExercise.addWorkoutSessionSet(sessionSet);
+                    }
                 }
             }
         }
@@ -141,6 +171,24 @@ public class WorkoutSessionService {
     @Transactional(readOnly = true)
     public Page<WorkoutSession> getCompletedSessions(Long memberId, Pageable pageable) {
         return workoutSessionRepository.findAllByMemberIdAndStatus(memberId, SessionStatus.COMPLETED, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public long sumDurationSeconds(Long memberId) {
+        Long result = workoutSessionRepository.sumDurationSecondsByMemberId(memberId);
+        return result != null ? result : 0L;
+    }
+
+    @Transactional(readOnly = true)
+    public long sumCompletedSets(Long memberId) {
+        Long result = workoutSessionRepository.sumCompletedSetsByMemberId(memberId);
+        return result != null ? result : 0L;
+    }
+
+    @Transactional(readOnly = true)
+    public long sumTotalSets(Long memberId) {
+        Long result = workoutSessionRepository.sumTotalSetsByMemberId(memberId);
+        return result != null ? result : 0L;
     }
 
     @Transactional(readOnly = true)

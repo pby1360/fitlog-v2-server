@@ -22,7 +22,7 @@ public class WorkoutSessionFacade {
     @Transactional
     public WorkoutSessionDto.Response startSession(Long memberId, WorkoutSessionDto.StartRequest request) {
         Member member = memberService.findMemberById(memberId);
-        WorkoutSession workoutSession = workoutSessionService.startSession(member, request.getWorkoutProgramId());
+        WorkoutSession workoutSession = workoutSessionService.startSession(member, request);
         return new WorkoutSessionDto.Response(workoutSession);
     }
 
@@ -81,9 +81,13 @@ public class WorkoutSessionFacade {
     }
 
     @Transactional(readOnly = true)
-    public Page<WorkoutSessionDto.LogSummaryResponse> getWorkoutLog(Long memberId, Pageable pageable) {
-        return workoutSessionService.getCompletedSessions(memberId, pageable)
+    public WorkoutSessionDto.LogPageResponse getWorkoutLog(Long memberId, Pageable pageable) {
+        Page<WorkoutSessionDto.LogSummaryResponse> page = workoutSessionService.getCompletedSessions(memberId, pageable)
                 .map(WorkoutSessionDto.LogSummaryResponse::new);
+        long totalDurationSeconds = workoutSessionService.sumDurationSeconds(memberId);
+        long totalCompletedSets = workoutSessionService.sumCompletedSets(memberId);
+        long totalSets = workoutSessionService.sumTotalSets(memberId);
+        return new WorkoutSessionDto.LogPageResponse(page, totalDurationSeconds, totalCompletedSets, totalSets);
     }
 
     @Transactional(readOnly = true)

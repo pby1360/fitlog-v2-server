@@ -6,6 +6,8 @@ import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSessionSet;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.SessionStatus;
 import lombok.Getter;
 
+import org.springframework.data.domain.Page;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -18,6 +20,23 @@ public class WorkoutSessionDto {
     @Getter
     public static class StartRequest {
         private Long workoutProgramId;
+        private List<CustomExerciseRequest> customExercises;
+    }
+
+    @Getter
+    public static class CustomExerciseRequest {
+        private Long workoutId;
+        private Integer order;
+        private List<CustomSetRequest> sets;
+    }
+
+    @Getter
+    public static class CustomSetRequest {
+        private Integer setNumber;
+        private Double weight;
+        private Integer reps;
+        private Integer restTime;
+        private String memo;
     }
 
     @Getter
@@ -167,26 +186,31 @@ public class WorkoutSessionDto {
     }
 
     @Getter
-    public static class LogSummaryResponse {
-        private Long id;
-        private Long workoutProgramId;
-        private String workoutProgramName;
-        private ZonedDateTime startTime;
-        private ZonedDateTime endTime;
-        private Long durationSeconds;
-        private String status;
+    public static class LogPageResponse {
+        private List<LogSummaryResponse> content;
+        private int currentPage;
+        private int totalPages;
+        private long totalElements;
+        private boolean first;
+        private boolean last;
+        private long totalDurationSeconds;
+        private long totalCompletedSets;
+        private long totalSets;
+        private int averageCompletionRate;
 
-        public LogSummaryResponse(WorkoutSession workoutSession) {
-            this.id = workoutSession.getId();
-            this.workoutProgramId = workoutSession.getWorkoutProgram().getId();
-            this.workoutProgramName = workoutSession.getWorkoutProgram().getName();
-            this.startTime = workoutSession.getStartTime();
-            this.endTime = workoutSession.getEndTime();
-            this.durationSeconds = (workoutSession.getStartTime() != null && workoutSession.getEndTime() != null)
-                    ? Duration.between(workoutSession.getStartTime(), workoutSession.getEndTime()).getSeconds()
-                            - (workoutSession.getTotalPausedSeconds() != null ? workoutSession.getTotalPausedSeconds() : 0L)
-                    : null;
-            this.status = workoutSession.getStatus().name();
+        public LogPageResponse(Page<LogSummaryResponse> page, long totalDurationSeconds, long totalCompletedSets, long totalSets) {
+            this.content = page.getContent();
+            this.currentPage = page.getNumber();
+            this.totalPages = page.getTotalPages();
+            this.totalElements = page.getTotalElements();
+            this.first = page.isFirst();
+            this.last = page.isLast();
+            this.totalDurationSeconds = totalDurationSeconds;
+            this.totalCompletedSets = totalCompletedSets;
+            this.totalSets = totalSets;
+            this.averageCompletionRate = totalSets > 0
+                    ? (int) Math.round((double) totalCompletedSets / totalSets * 100)
+                    : 0;
         }
     }
 

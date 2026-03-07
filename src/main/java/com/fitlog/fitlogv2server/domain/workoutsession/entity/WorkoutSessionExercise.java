@@ -31,7 +31,7 @@ public class WorkoutSessionExercise {
     @Column(name = "`order`")
     private Integer order;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean skipped = false;
 
     @BatchSize(size = 100)
