@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -59,4 +61,119 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
             "WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED'",
             nativeQuery = true)
     Long sumTotalSetsByMemberId(@Param("memberId") Long memberId);
+
+    // --- Dashboard Stats Queries ---
+
+    @Query(value = "SELECT COUNT(*) FROM workout_session WHERE member_id = :memberId AND status = 'COMPLETED'",
+            nativeQuery = true)
+    Long countCompleted(@Param("memberId") Long memberId);
+
+    @Query(value = """
+            SELECT AVG(CAST(completed_count AS FLOAT) / NULLIF(total_count, 0))
+            FROM (
+                SELECT ws.id,
+                    COUNT(CASE WHEN wss.completed = true THEN 1 END) AS completed_count,
+                    COUNT(wss.id) AS total_count
+                FROM workout_session ws
+                JOIN workout_session_exercise wse ON ws.id = wse.workout_session_id
+                JOIN workout_session_set wss ON wse.id = wss.workout_session_exercise_id
+                WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED'
+                GROUP BY ws.id
+            ) sub
+            """, nativeQuery = true)
+    Double averageCompletionRate(@Param("memberId") Long memberId);
+
+    @Query(value = """
+            SELECT COALESCE(MAX(
+                EXTRACT(EPOCH FROM (end_time - start_time)) - COALESCE(total_paused_seconds, 0)
+            ), 0)
+            FROM workout_session
+            WHERE member_id = :memberId AND status = 'COMPLETED'
+            """, nativeQuery = true)
+    Long maxDurationSeconds(@Param("memberId") Long memberId);
+
+    @Query(value = """
+            SELECT COUNT(*) FROM workout_session
+            WHERE member_id = :memberId AND status = 'COMPLETED'
+            AND start_time >= :from AND start_time < :to
+            """, nativeQuery = true)
+    Long countCompletedBetween(@Param("memberId") Long memberId,
+            @Param("from") ZonedDateTime from,
+            @Param("to") ZonedDateTime to);
+
+    @Query(value = "SELECT start_time FROM workout_session WHERE member_id = :memberId AND status = 'COMPLETED'",
+            nativeQuery = true)
+    List<ZonedDateTime> findCompletedStartTimes(@Param("memberId") Long memberId);
+
+    @Query(value = """
+            SELECT
+                EXTRACT(ISODOW FROM start_time)::int AS dayOfWeek,
+                COUNT(*) AS workoutCount,
+                COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) - COALESCE(total_paused_seconds, 0)), 0) AS totalDurationSeconds
+            FROM workout_session
+            WHERE member_id = :memberId AND status = 'COMPLETED'
+            AND start_time >= :from AND start_time < :to
+            GROUP BY EXTRACT(ISODOW FROM start_time)
+            """, nativeQuery = true)
+    List<WeeklyProgressProjection> findWeeklyProgress(@Param("memberId") Long memberId,
+            @Param("from") ZonedDateTime from,
+            @Param("to") ZonedDateTime to);
+
+    @Query(value = """
+            SELECT wp.name AS bodyPart, COUNT(wp.id) AS count
+            FROM workout_session ws
+            JOIN workout_session_exercise wse ON ws.id = wse.workout_session_id
+            JOIN workout w ON wse.workout_id = w.id
+            JOIN workout_part wp ON w.workout_part_id = wp.id
+            WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED'
+            GROUP BY wp.name
+            ORDER BY count DESC
+            """, nativeQuery = true)
+    List<BodyPartStatProjection> findBodyPartStats(@Param("memberId") Long memberId);
+
+    @Query(value = """
+            SELECT wp.name
+            FROM workout_session ws
+            JOIN workout_session_exercise wse ON ws.id = wse.workout_session_id
+            JOIN workout w ON wse.workout_id = w.id
+            JOIN workout_part wp ON w.workout_part_id = wp.id
+            WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED'
+            GROUP BY wp.name
+            ORDER BY COUNT(wp.id) DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findFavoriteBodyPart(@Param("memberId") Long memberId);
+
+    @Query(value = """
+            SELECT
+                EXTRACT(YEAR FROM start_time)::int AS year,
+                EXTRACT(MONTH FROM start_time)::int AS month,
+                COUNT(*) AS workoutCount,
+                COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) - COALESCE(total_paused_seconds, 0)), 0) AS totalDurationSeconds
+            FROM workout_session
+            WHERE member_id = :memberId AND status = 'COMPLETED' AND start_time >= :from
+            GROUP BY year, month
+            ORDER BY year ASC, month ASC
+            """, nativeQuery = true)
+    List<MonthlyStatProjection> findMonthlyStats(@Param("memberId") Long memberId,
+            @Param("from") ZonedDateTime from);
+
+    @Query(value = """
+            SELECT
+                ws.id,
+                wp.name AS programName,
+                ws.start_time AS startTime,
+                (EXTRACT(EPOCH FROM (ws.end_time - ws.start_time)) - COALESCE(ws.total_paused_seconds, 0)) AS durationSeconds,
+                COUNT(CASE WHEN wss.completed = true THEN 1 END) AS completedSets,
+                COUNT(wss.id) AS totalSets
+            FROM workout_session ws
+            LEFT JOIN workout_program wp ON ws.workout_program_id = wp.id
+            LEFT JOIN workout_session_exercise wse ON ws.id = wse.workout_session_id
+            LEFT JOIN workout_session_set wss ON wse.id = wss.workout_session_exercise_id
+            WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED'
+            GROUP BY ws.id, wp.name, ws.start_time, ws.end_time, ws.total_paused_seconds
+            ORDER BY ws.start_time DESC
+            LIMIT 3
+            """, nativeQuery = true)
+    List<RecentWorkoutProjection> findRecentCompleted(@Param("memberId") Long memberId);
 }
