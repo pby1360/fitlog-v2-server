@@ -4,7 +4,6 @@ import com.fitlog.fitlogv2server.domain.workoutsession.dto.WorkoutSessionDto;
 import com.fitlog.fitlogv2server.domain.workoutsession.facade.WorkoutSessionFacade;
 import com.fitlog.fitlogv2server.global.security.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -60,6 +59,42 @@ public class WorkoutSessionController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{sessionId}/skip-exercise")
+    public ResponseEntity<WorkoutSessionDto.Response> skipExercise(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody WorkoutSessionDto.SkipExerciseRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.skipExercise(userDetails.getId(), sessionId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{sessionId}/reorder-exercises")
+    public ResponseEntity<WorkoutSessionDto.Response> reorderExercises(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody WorkoutSessionDto.ReorderExercisesRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.reorderExercises(userDetails.getId(), sessionId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{sessionId}/exercises")
+    public ResponseEntity<WorkoutSessionDto.Response> addExercise(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody WorkoutSessionDto.AddExerciseRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.addExercise(userDetails.getId(), sessionId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{sessionId}/exercises/{exerciseId}")
+    public ResponseEntity<WorkoutSessionDto.Response> removeExercise(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @PathVariable Long exerciseId) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.removeExercise(userDetails.getId(), sessionId, exerciseId);
+        return ResponseEntity.ok(response);
+    }
+
     @PatchMapping("/{sessionId}/end")
     public ResponseEntity<WorkoutSessionDto.Response> endSession(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -70,10 +105,10 @@ public class WorkoutSessionController {
     }
 
     @GetMapping("/logs")
-    public ResponseEntity<Page<WorkoutSessionDto.LogSummaryResponse>> getWorkoutLog(
+    public ResponseEntity<WorkoutSessionDto.LogPageResponse> getWorkoutLog(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<WorkoutSessionDto.LogSummaryResponse> response = workoutSessionFacade.getWorkoutLog(userDetails.getId(), pageable);
+        WorkoutSessionDto.LogPageResponse response = workoutSessionFacade.getWorkoutLog(userDetails.getId(), pageable);
         return ResponseEntity.ok(response);
     }
 

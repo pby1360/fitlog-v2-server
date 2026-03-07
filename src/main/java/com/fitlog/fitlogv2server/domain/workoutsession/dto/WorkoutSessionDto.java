@@ -6,6 +6,8 @@ import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSessionSet;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.SessionStatus;
 import lombok.Getter;
 
+import org.springframework.data.domain.Page;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -18,6 +20,23 @@ public class WorkoutSessionDto {
     @Getter
     public static class StartRequest {
         private Long workoutProgramId;
+        private List<CustomExerciseRequest> customExercises;
+    }
+
+    @Getter
+    public static class CustomExerciseRequest {
+        private Long workoutId;
+        private Integer order;
+        private List<CustomSetRequest> sets;
+    }
+
+    @Getter
+    public static class CustomSetRequest {
+        private Integer setNumber;
+        private Double weight;
+        private Integer reps;
+        private Integer restTime;
+        private String memo;
     }
 
     @Getter
@@ -33,6 +52,44 @@ public class WorkoutSessionDto {
     public static class EndRequest {
         private ZonedDateTime endTime;
         private SessionStatus status;
+    }
+
+    @Getter
+    public static class SkipExerciseRequest {
+        private Long workoutSessionExerciseId;
+        private Boolean skipped;
+    }
+
+    @Getter
+    public static class ReorderExercisesRequest {
+        private List<ExerciseOrderItem> exercises;
+    }
+
+    @Getter
+    public static class ExerciseOrderItem {
+        private Long workoutSessionExerciseId;
+        private Integer order;
+    }
+
+    @Getter
+    public static class AddExerciseRequest {
+        private Long workoutId;
+        private Integer order;
+        private List<AddSetRequest> sets;
+    }
+
+    @Getter
+    public static class AddSetRequest {
+        private Integer setNumber;
+        private Double weight;
+        private Integer reps;
+        private Integer restTime;
+        private String memo;
+    }
+
+    @Getter
+    public static class RemoveExerciseRequest {
+        private Long workoutSessionExerciseId;
     }
 
     @Getter
@@ -66,6 +123,7 @@ public class WorkoutSessionDto {
         private String workoutName;
         private String bodyPart;
         private int order;
+        private boolean skipped;
         private List<SetResponse> sets;
 
         public ExerciseResponse(WorkoutSessionExercise exercise) {
@@ -74,6 +132,7 @@ public class WorkoutSessionDto {
             this.workoutName = exercise.getWorkout().getName();
             this.bodyPart = exercise.getWorkout().getWorkoutPart().getName();
             this.order = exercise.getOrder();
+            this.skipped = exercise.getSkipped();
             this.sets = exercise.getWorkoutSessionSets().stream()
                     .sorted(Comparator.comparing(WorkoutSessionSet::getSetNumber))
                     .map(SetResponse::new)
@@ -123,6 +182,35 @@ public class WorkoutSessionDto {
                     .map(e -> e.getWorkout().getWorkoutPart().getName())
                     .distinct()
                     .collect(Collectors.toList());
+        }
+    }
+
+    @Getter
+    public static class LogPageResponse {
+        private List<LogSummaryResponse> content;
+        private int currentPage;
+        private int totalPages;
+        private long totalElements;
+        private boolean first;
+        private boolean last;
+        private long totalDurationSeconds;
+        private long totalCompletedSets;
+        private long totalSets;
+        private int averageCompletionRate;
+
+        public LogPageResponse(Page<LogSummaryResponse> page, long totalDurationSeconds, long totalCompletedSets, long totalSets) {
+            this.content = page.getContent();
+            this.currentPage = page.getNumber();
+            this.totalPages = page.getTotalPages();
+            this.totalElements = page.getTotalElements();
+            this.first = page.isFirst();
+            this.last = page.isLast();
+            this.totalDurationSeconds = totalDurationSeconds;
+            this.totalCompletedSets = totalCompletedSets;
+            this.totalSets = totalSets;
+            this.averageCompletionRate = totalSets > 0
+                    ? (int) Math.round((double) totalCompletedSets / totalSets * 100)
+                    : 0;
         }
     }
 

@@ -22,10 +22,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.fitlog.fitlogv2server.domain.workout.entity.Workout;
+import com.fitlog.fitlogv2server.domain.workout.repository.WorkoutRepository;
+
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,10 +41,11 @@ public class WorkoutSessionService {
     private final WorkoutProgramRepository workoutProgramRepository;
     private final WorkoutSessionExerciseRepository workoutSessionExerciseRepository;
     private final WorkoutSessionSetRepository workoutSessionSetRepository;
+    private final WorkoutRepository workoutRepository;
 
     @Transactional
-    public WorkoutSession startSession(Member member, Long workoutProgramId) {
-        WorkoutProgram workoutProgram = workoutProgramRepository.findById(workoutProgramId)
+    public WorkoutSession startSession(Member member, WorkoutSessionDto.StartRequest request) {
+        WorkoutProgram workoutProgram = workoutProgramRepository.findById(request.getWorkoutProgramId())
                 .orElseThrow(() -> new IllegalArgumentException("Workout program not found"));
 
         WorkoutSession workoutSession = WorkoutSession.builder()
@@ -48,30 +55,60 @@ public class WorkoutSessionService {
                 .status(SessionStatus.IN_PROGRESS)
                 .build();
 
-        int orderCounter = 1;
-        for (WorkoutProgramPart programPart : workoutProgram.getParts()) {
-            for (WorkoutProgramExercise programExercise : programPart.getExercises()) {
+        List<WorkoutSessionDto.CustomExerciseRequest> customExercises = request.getCustomExercises();
+        if (customExercises != null && !customExercises.isEmpty()) {
+            for (WorkoutSessionDto.CustomExerciseRequest customEx : customExercises) {
+                Workout workout = workoutRepository.findById(customEx.getWorkoutId())
+                        .orElseThrow(() -> new IllegalArgumentException("Workout not found: " + customEx.getWorkoutId()));
+
                 WorkoutSessionExercise sessionExercise = WorkoutSessionExercise.builder()
                         .workoutSession(workoutSession)
-                        .workout(programExercise.getWorkout())
-                        .order(orderCounter++)
+                        .workout(workout)
+                        .order(customEx.getOrder())
                         .build();
                 workoutSession.addWorkoutSessionExercise(sessionExercise);
 
-                for (WorkoutProgramSet programSet : programExercise.getSets()) {
-                    WorkoutSessionSet sessionSet = WorkoutSessionSet.builder()
-                            .workoutSessionExercise(sessionExercise)
-                            .setNumber(programSet.getSetNumber())
-                            .weight(programSet.getWeight())
-                            .reps(programSet.getReps())
-                            .restTime(programSet.getRestTime())
-                            .memo(programSet.getMemo())
-                            .completed(false)
-                            .actualWeight(null)
-                            .actualReps(null)
-                            .actualMemo(null)
+                if (customEx.getSets() != null) {
+                    for (WorkoutSessionDto.CustomSetRequest setReq : customEx.getSets()) {
+                        WorkoutSessionSet sessionSet = WorkoutSessionSet.builder()
+                                .workoutSessionExercise(sessionExercise)
+                                .setNumber(setReq.getSetNumber())
+                                .weight(setReq.getWeight())
+                                .reps(setReq.getReps())
+                                .restTime(setReq.getRestTime())
+                                .memo(setReq.getMemo())
+                                .completed(false)
+                                .build();
+                        sessionExercise.addWorkoutSessionSet(sessionSet);
+                    }
+                }
+            }
+        } else {
+            int orderCounter = 1;
+            for (WorkoutProgramPart programPart : workoutProgram.getParts()) {
+                for (WorkoutProgramExercise programExercise : programPart.getExercises()) {
+                    WorkoutSessionExercise sessionExercise = WorkoutSessionExercise.builder()
+                            .workoutSession(workoutSession)
+                            .workout(programExercise.getWorkout())
+                            .order(orderCounter++)
                             .build();
-                    sessionExercise.addWorkoutSessionSet(sessionSet);
+                    workoutSession.addWorkoutSessionExercise(sessionExercise);
+
+                    for (WorkoutProgramSet programSet : programExercise.getSets()) {
+                        WorkoutSessionSet sessionSet = WorkoutSessionSet.builder()
+                                .workoutSessionExercise(sessionExercise)
+                                .setNumber(programSet.getSetNumber())
+                                .weight(programSet.getWeight())
+                                .reps(programSet.getReps())
+                                .restTime(programSet.getRestTime())
+                                .memo(programSet.getMemo())
+                                .completed(false)
+                                .actualWeight(null)
+                                .actualReps(null)
+                                .actualMemo(null)
+                                .build();
+                        sessionExercise.addWorkoutSessionSet(sessionSet);
+                    }
                 }
             }
         }
@@ -137,9 +174,144 @@ public class WorkoutSessionService {
     }
 
     @Transactional(readOnly = true)
+    public long sumDurationSeconds(Long memberId) {
+        Long result = workoutSessionRepository.sumDurationSecondsByMemberId(memberId);
+        return result != null ? result : 0L;
+    }
+
+    @Transactional(readOnly = true)
+    public long sumCompletedSets(Long memberId) {
+        Long result = workoutSessionRepository.sumCompletedSetsByMemberId(memberId);
+        return result != null ? result : 0L;
+    }
+
+    @Transactional(readOnly = true)
+    public long sumTotalSets(Long memberId) {
+        Long result = workoutSessionRepository.sumTotalSetsByMemberId(memberId);
+        return result != null ? result : 0L;
+    }
+
+    @Transactional(readOnly = true)
     public WorkoutSession getSessionDetail(Long memberId, Long sessionId) {
         return workoutSessionRepository.findDetailByIdAndMemberId(sessionId, memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Workout session not found or does not belong to the member"));
+    }
+
+    @Transactional
+    public WorkoutSession skipExercise(Long memberId, Long sessionId, WorkoutSessionDto.SkipExerciseRequest request) {
+        WorkoutSession workoutSession = findWorkoutSessionByIdAndMemberId(sessionId, memberId);
+
+        WorkoutSessionExercise exercise = workoutSession.getWorkoutSessionExercises().stream()
+                .filter(e -> e.getId().equals(request.getWorkoutSessionExerciseId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Workout session exercise not found"));
+
+        if (Boolean.TRUE.equals(request.getSkipped())) {
+            exercise.skip();
+        } else {
+            exercise.unskip();
+        }
+
+        if (workoutSession.isAllSetsCompleted()) {
+            workoutSession.updateStatusAndEndTime(SessionStatus.COMPLETED, ZonedDateTime.now(ZoneOffset.UTC));
+        }
+
+        return workoutSession;
+    }
+
+    @Transactional
+    public WorkoutSession reorderExercises(Long memberId, Long sessionId, WorkoutSessionDto.ReorderExercisesRequest request) {
+        WorkoutSession workoutSession = findWorkoutSessionByIdAndMemberId(sessionId, memberId);
+
+        Map<Long, Integer> orderMap = request.getExercises().stream()
+                .collect(Collectors.toMap(
+                        WorkoutSessionDto.ExerciseOrderItem::getWorkoutSessionExerciseId,
+                        WorkoutSessionDto.ExerciseOrderItem::getOrder
+                ));
+
+        for (WorkoutSessionExercise exercise : workoutSession.getWorkoutSessionExercises()) {
+            Integer newOrder = orderMap.get(exercise.getId());
+            if (newOrder != null) {
+                exercise.updateOrder(newOrder);
+            }
+        }
+
+        return workoutSession;
+    }
+
+    @Transactional
+    public WorkoutSession addExercise(Long memberId, Long sessionId, WorkoutSessionDto.AddExerciseRequest request) {
+        WorkoutSession workoutSession = findWorkoutSessionByIdAndMemberId(sessionId, memberId);
+
+        Workout workout = workoutRepository.findById(request.getWorkoutId())
+                .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
+
+        // Shift existing exercises' order if needed
+        int newOrder = request.getOrder() != null ? request.getOrder() :
+                workoutSession.getWorkoutSessionExercises().size() + 1;
+
+        for (WorkoutSessionExercise existing : workoutSession.getWorkoutSessionExercises()) {
+            if (existing.getOrder() >= newOrder) {
+                existing.updateOrder(existing.getOrder() + 1);
+            }
+        }
+
+        WorkoutSessionExercise sessionExercise = WorkoutSessionExercise.builder()
+                .workoutSession(workoutSession)
+                .workout(workout)
+                .order(newOrder)
+                .build();
+        workoutSession.addWorkoutSessionExercise(sessionExercise);
+
+        if (request.getSets() != null && !request.getSets().isEmpty()) {
+            for (WorkoutSessionDto.AddSetRequest setRequest : request.getSets()) {
+                WorkoutSessionSet sessionSet = WorkoutSessionSet.builder()
+                        .workoutSessionExercise(sessionExercise)
+                        .setNumber(setRequest.getSetNumber())
+                        .weight(setRequest.getWeight())
+                        .reps(setRequest.getReps())
+                        .restTime(setRequest.getRestTime())
+                        .memo(setRequest.getMemo())
+                        .completed(false)
+                        .build();
+                sessionExercise.addWorkoutSessionSet(sessionSet);
+            }
+        } else {
+            // Default: add 1 empty set
+            WorkoutSessionSet defaultSet = WorkoutSessionSet.builder()
+                    .workoutSessionExercise(sessionExercise)
+                    .setNumber(1)
+                    .weight(0.0)
+                    .reps(0)
+                    .restTime(60)
+                    .completed(false)
+                    .build();
+            sessionExercise.addWorkoutSessionSet(defaultSet);
+        }
+
+        return workoutSession;
+    }
+
+    @Transactional
+    public WorkoutSession removeExercise(Long memberId, Long sessionId, Long workoutSessionExerciseId) {
+        WorkoutSession workoutSession = findWorkoutSessionByIdAndMemberId(sessionId, memberId);
+
+        WorkoutSessionExercise exerciseToRemove = workoutSession.getWorkoutSessionExercises().stream()
+                .filter(e -> e.getId().equals(workoutSessionExerciseId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Workout session exercise not found"));
+
+        int removedOrder = exerciseToRemove.getOrder();
+        workoutSession.removeWorkoutSessionExercise(exerciseToRemove);
+
+        // Re-order remaining exercises
+        for (WorkoutSessionExercise exercise : workoutSession.getWorkoutSessionExercises()) {
+            if (exercise.getOrder() > removedOrder) {
+                exercise.updateOrder(exercise.getOrder() - 1);
+            }
+        }
+
+        return workoutSession;
     }
 
     private WorkoutSession findWorkoutSessionByIdAndMemberId(Long sessionId, Long memberId) {
