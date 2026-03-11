@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,11 +67,14 @@ public class DashboardService {
     }
 
     private int calculateStreak(Long memberId, ZoneId zone) {
-        List<ZonedDateTime> startTimes = workoutSessionRepository.findCompletedStartTimes(memberId);
-        if (startTimes.isEmpty()) return 0;
+        List<Timestamp> startTimes = workoutSessionRepository.findCompletedStartTimes(memberId);
+        if (startTimes == null || startTimes.isEmpty()) return 0;
 
         Set<LocalDate> dates = startTimes.stream()
-                .map(zdt -> zdt.withZoneSameInstant(zone).toLocalDate())
+                .map(ts -> {
+                    // Convert SQL Timestamp -> Instant -> ZonedDateTime in the requested zone
+                    return ts.toInstant().atZone(zone).toLocalDate();
+                })
                 .collect(Collectors.toSet());
 
         LocalDate today = LocalDate.now(zone);
@@ -133,7 +137,7 @@ public class DashboardService {
                 .map(r -> DashboardStatsDto.RecentWorkoutItem.builder()
                         .id(r.getId())
                         .programName(r.getProgramName())
-                        .date(r.getStartTime().withZoneSameInstant(zone).toLocalDate().toString())
+                        .date(r.getStartTime().atZone(zone).toLocalDate().toString())
                         .totalDurationSeconds(r.getDurationSeconds() != null ? r.getDurationSeconds() : 0L)
                         .completedSets(r.getCompletedSets() != null ? r.getCompletedSets().intValue() : 0)
                         .totalSets(r.getTotalSets() != null ? r.getTotalSets().intValue() : 0)

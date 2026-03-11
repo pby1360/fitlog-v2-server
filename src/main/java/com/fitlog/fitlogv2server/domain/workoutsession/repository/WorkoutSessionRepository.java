@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.sql.Timestamp;
 
 public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, Long> {
     @Query("SELECT ws FROM WorkoutSession ws " +
@@ -103,7 +104,7 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
 
     @Query(value = "SELECT start_time FROM workout_session WHERE member_id = :memberId AND status = 'COMPLETED'",
             nativeQuery = true)
-    List<ZonedDateTime> findCompletedStartTimes(@Param("memberId") Long memberId);
+    List<Timestamp> findCompletedStartTimes(@Param("memberId") Long memberId);
 
     @Query(value = """
             SELECT
