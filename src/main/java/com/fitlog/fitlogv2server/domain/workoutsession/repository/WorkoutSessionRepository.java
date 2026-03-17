@@ -34,6 +34,14 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
     Page<WorkoutSession> findAllByMemberIdAndStatus(@Param("memberId") Long memberId, @Param("status") SessionStatus status, Pageable pageable);
 
     @Query("SELECT ws FROM WorkoutSession ws " +
+            "JOIN FETCH ws.workoutProgram " +
+            "WHERE ws.member.id = :memberId AND ws.status = :status " +
+            "AND ws.startTime >= :startDate AND ws.startTime < :endDate " +
+            "ORDER BY ws.startTime DESC")
+    Page<WorkoutSession> findAllByMemberIdAndStatusBetween(@Param("memberId") Long memberId, @Param("status") SessionStatus status,
+            @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, Pageable pageable);
+
+    @Query("SELECT ws FROM WorkoutSession ws " +
             "LEFT JOIN FETCH ws.workoutProgram " +
             "LEFT JOIN FETCH ws.workoutSessionExercises wse " +
             "LEFT JOIN FETCH wse.workout " +
@@ -49,6 +57,16 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
             nativeQuery = true)
     Long sumDurationSecondsByMemberId(@Param("memberId") Long memberId);
 
+    @Query(value = "SELECT COALESCE(SUM(" +
+            "CASE WHEN ws.start_time IS NOT NULL AND ws.end_time IS NOT NULL " +
+            "THEN EXTRACT(EPOCH FROM (ws.end_time - ws.start_time)) - COALESCE(ws.total_paused_seconds, 0) " +
+            "ELSE 0 END), 0) " +
+            "FROM workout_session ws WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED' " +
+            "AND ws.start_time >= :startDate AND ws.start_time < :endDate",
+            nativeQuery = true)
+    Long sumDurationSecondsByMemberIdBetween(@Param("memberId") Long memberId,
+            @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
     @Query(value = "SELECT COUNT(*) FROM workout_session_set wss " +
             "JOIN workout_session_exercise wse ON wss.workout_session_exercise_id = wse.id " +
             "JOIN workout_session ws ON wse.workout_session_id = ws.id " +
@@ -59,9 +77,27 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
     @Query(value = "SELECT COUNT(*) FROM workout_session_set wss " +
             "JOIN workout_session_exercise wse ON wss.workout_session_exercise_id = wse.id " +
             "JOIN workout_session ws ON wse.workout_session_id = ws.id " +
+            "WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED' AND wss.completed = true " +
+            "AND ws.start_time >= :startDate AND ws.start_time < :endDate",
+            nativeQuery = true)
+    Long sumCompletedSetsByMemberIdBetween(@Param("memberId") Long memberId,
+            @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
+    @Query(value = "SELECT COUNT(*) FROM workout_session_set wss " +
+            "JOIN workout_session_exercise wse ON wss.workout_session_exercise_id = wse.id " +
+            "JOIN workout_session ws ON wse.workout_session_id = ws.id " +
             "WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED'",
             nativeQuery = true)
     Long sumTotalSetsByMemberId(@Param("memberId") Long memberId);
+
+    @Query(value = "SELECT COUNT(*) FROM workout_session_set wss " +
+            "JOIN workout_session_exercise wse ON wss.workout_session_exercise_id = wse.id " +
+            "JOIN workout_session ws ON wse.workout_session_id = ws.id " +
+            "WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED' " +
+            "AND ws.start_time >= :startDate AND ws.start_time < :endDate",
+            nativeQuery = true)
+    Long sumTotalSetsByMemberIdBetween(@Param("memberId") Long memberId,
+            @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     // --- Dashboard Stats Queries ---
 

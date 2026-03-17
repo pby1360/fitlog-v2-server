@@ -11,6 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Service
@@ -81,12 +84,28 @@ public class WorkoutSessionFacade {
     }
 
     @Transactional(readOnly = true)
-    public WorkoutSessionDto.LogPageResponse getWorkoutLog(Long memberId, Pageable pageable) {
-        Page<WorkoutSessionDto.LogSummaryResponse> page = workoutSessionService.getCompletedSessions(memberId, pageable)
-                .map(WorkoutSessionDto.LogSummaryResponse::new);
-        long totalDurationSeconds = workoutSessionService.sumDurationSeconds(memberId);
-        long totalCompletedSets = workoutSessionService.sumCompletedSets(memberId);
-        long totalSets = workoutSessionService.sumTotalSets(memberId);
+    public WorkoutSessionDto.LogPageResponse getWorkoutLog(Long memberId, Pageable pageable, LocalDate startDate, LocalDate endDate) {
+        Page<WorkoutSessionDto.LogSummaryResponse> page;
+        long totalDurationSeconds;
+        long totalCompletedSets;
+        long totalSets;
+
+        if (startDate != null && endDate != null) {
+            ZonedDateTime start = startDate.atStartOfDay(ZoneOffset.UTC);
+            ZonedDateTime end = endDate.plusDays(1).atStartOfDay(ZoneOffset.UTC);
+            page = workoutSessionService.getCompletedSessions(memberId, pageable, start, end)
+                    .map(WorkoutSessionDto.LogSummaryResponse::new);
+            totalDurationSeconds = workoutSessionService.sumDurationSeconds(memberId, start, end);
+            totalCompletedSets = workoutSessionService.sumCompletedSets(memberId, start, end);
+            totalSets = workoutSessionService.sumTotalSets(memberId, start, end);
+        } else {
+            page = workoutSessionService.getCompletedSessions(memberId, pageable)
+                    .map(WorkoutSessionDto.LogSummaryResponse::new);
+            totalDurationSeconds = workoutSessionService.sumDurationSeconds(memberId);
+            totalCompletedSets = workoutSessionService.sumCompletedSets(memberId);
+            totalSets = workoutSessionService.sumTotalSets(memberId);
+        }
+
         return new WorkoutSessionDto.LogPageResponse(page, totalDurationSeconds, totalCompletedSets, totalSets);
     }
 

@@ -1,39 +1,81 @@
 package com.fitlog.fitlogv2server.domain.member.service;
 
+import com.fitlog.fitlogv2server.domain.member.dto.MemberResponseDto;
+import com.fitlog.fitlogv2server.domain.member.dto.MemberUpdateRequestDto;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.domain.member.repository.MemberRepository;
+import com.fitlog.fitlogv2server.domain.workoutsession.repository.WorkoutSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor // final이 붙은 필드의 생성자를 자동으로 생성
-@Transactional(readOnly = true) // 기본적으로 읽기 전용 트랜잭션
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final WorkoutSessionRepository workoutSessionRepository;
 
     /**
-     * (로그인 구현 후) 내 정보 조회 시 사용할 메서드
+     * 내 정보 조회
      *
-     * @param memberId (SecurityContext에서 가져온 사용자 ID)
+     * @param memberId SecurityContext에서 가져온 사용자 ID
      * @return Member
      */
     public Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 회원을 찾을 수 없습니다.")); // [!] 추후 커스텀 예외로 변경
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 회원을 찾을 수 없습니다."));
     }
 
     /**
-     * (로그인 구현 후) 닉네임 변경 시 사용할 메서드
+     * 내 프로필 조회 (운동 통계 포함)
      *
-     * @param memberId    (SecurityContext에서 가져온 사용자 ID)
-     * @param newNickname (변경할 새 닉네임)
+     * @param memberId SecurityContext에서 가져온 사용자 ID
+     * @return MemberResponseDto
      */
-    @Transactional // 쓰기 작업이므로 readOnly = false (기본값)
+    public MemberResponseDto getMyProfile(Long memberId) {
+        Member member = findMemberById(memberId);
+        long totalWorkoutDays = workoutSessionRepository.countCompleted(memberId);
+        long totalCompletedSets = workoutSessionRepository.sumCompletedSetsByMemberId(memberId);
+        long totalDurationSeconds = workoutSessionRepository.sumDurationSecondsByMemberId(memberId);
+        return new MemberResponseDto(member, totalWorkoutDays, totalCompletedSets, totalDurationSeconds);
+    }
+
+    /**
+     * 프로필 업데이트 (닉네임, 전화번호, 생년월일, 신장, 체중, 목표, 경력)
+     *
+     * @param memberId   SecurityContext에서 가져온 사용자 ID
+     * @param dto        업데이트 요청 DTO
+     * @return MemberResponseDto
+     */
+    @Transactional
+    public MemberResponseDto updateProfile(Long memberId, MemberUpdateRequestDto dto) {
+        Member member = findMemberById(memberId);
+        member.updateProfile(
+                dto.getNickname(),
+                dto.getPhone(),
+                dto.getBirthDate(),
+                dto.getHeight(),
+                dto.getWeight(),
+                dto.getGoal(),
+                dto.getExperience()
+        );
+        long totalWorkoutDays = workoutSessionRepository.countCompleted(memberId);
+        long totalCompletedSets = workoutSessionRepository.sumCompletedSetsByMemberId(memberId);
+        long totalDurationSeconds = workoutSessionRepository.sumDurationSecondsByMemberId(memberId);
+        return new MemberResponseDto(member, totalWorkoutDays, totalCompletedSets, totalDurationSeconds);
+    }
+
+    /**
+     * 닉네임 변경 (하위 호환용)
+     *
+     * @param memberId    SecurityContext에서 가져온 사용자 ID
+     * @param newNickname 변경할 새 닉네임
+     */
+    @Transactional
     public void updateNickname(Long memberId, String newNickname) {
         Member member = findMemberById(memberId);
         member.updateNickname(newNickname);
-        // @Transactional에 의해 'Dirty Checking'이 일어나므로 .save() 호출 불필요
     }
 }
