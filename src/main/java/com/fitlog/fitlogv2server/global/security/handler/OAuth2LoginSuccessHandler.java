@@ -54,9 +54,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String accessToken = tokenProvider.createAccessToken(member.getId(), email, member.getNickname(), member.getRole());
         String refreshToken = tokenProvider.createRefreshToken(member.getId(), email, member.getNickname(), member.getRole());
 
-        // [!] (중요) Refresh Token은 DB에 저장해야 함 (지금은 생략, 추후 구현)
-        // member.updateRefreshToken(refreshToken);
-        // memberRepository.save(member);
+        member.updateRefreshToken(refreshToken);
+        memberRepository.save(member);
 
         // 6. 프론트엔드(Vue)로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
         String targetUrl = UriComponentsBuilder.fromUriString(clientUrl + "/auth/callback") // 프론트의 콜백 URL

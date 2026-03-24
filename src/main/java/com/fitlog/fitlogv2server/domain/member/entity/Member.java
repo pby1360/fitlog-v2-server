@@ -48,6 +48,9 @@ public class Member extends BaseTimeEntity {
 
     private String experience;
 
+    @Column(length = 512)
+    private String refreshToken;
+
     @Builder
     public Member(String email, String nickname, String imageUrl, Role role, Provider provider, String providerId,
                   String phone, String birthDate, Integer height, Integer weight, String goal, String experience) {
@@ -71,6 +74,10 @@ public class Member extends BaseTimeEntity {
 
     public void updateImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     public void updateProfile(String nickname, String phone, String birthDate,

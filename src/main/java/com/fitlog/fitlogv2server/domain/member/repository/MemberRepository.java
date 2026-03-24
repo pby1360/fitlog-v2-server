@@ -14,4 +14,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
      * 이미 가입된 사용자인지 확인하기 위한 메서드입니다.
      */
     Optional<Member> findByEmail(String email);
+
+    Optional<Member> findByRefreshToken(String refreshToken);
 }
