@@ -174,8 +174,19 @@ public class WorkoutSessionService {
     }
 
     @Transactional(readOnly = true)
+    public Page<WorkoutSession> getCompletedSessions(Long memberId, Pageable pageable, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return workoutSessionRepository.findAllByMemberIdAndStatusBetween(memberId, SessionStatus.COMPLETED, startDate, endDate, pageable);
+    }
+
+    @Transactional(readOnly = true)
     public long sumDurationSeconds(Long memberId) {
         Long result = workoutSessionRepository.sumDurationSecondsByMemberId(memberId);
+        return result != null ? result : 0L;
+    }
+
+    @Transactional(readOnly = true)
+    public long sumDurationSeconds(Long memberId, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Long result = workoutSessionRepository.sumDurationSecondsByMemberIdBetween(memberId, startDate, endDate);
         return result != null ? result : 0L;
     }
 
@@ -186,8 +197,20 @@ public class WorkoutSessionService {
     }
 
     @Transactional(readOnly = true)
+    public long sumCompletedSets(Long memberId, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Long result = workoutSessionRepository.sumCompletedSetsByMemberIdBetween(memberId, startDate, endDate);
+        return result != null ? result : 0L;
+    }
+
+    @Transactional(readOnly = true)
     public long sumTotalSets(Long memberId) {
         Long result = workoutSessionRepository.sumTotalSetsByMemberId(memberId);
+        return result != null ? result : 0L;
+    }
+
+    @Transactional(readOnly = true)
+    public long sumTotalSets(Long memberId, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Long result = workoutSessionRepository.sumTotalSetsByMemberIdBetween(memberId, startDate, endDate);
         return result != null ? result : 0L;
     }
 

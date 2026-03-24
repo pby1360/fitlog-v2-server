@@ -7,9 +7,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/workout-sessions")
@@ -107,8 +110,10 @@ public class WorkoutSessionController {
     @GetMapping("/logs")
     public ResponseEntity<WorkoutSessionDto.LogPageResponse> getWorkoutLog(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
-        WorkoutSessionDto.LogPageResponse response = workoutSessionFacade.getWorkoutLog(userDetails.getId(), pageable);
+            @PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        WorkoutSessionDto.LogPageResponse response = workoutSessionFacade.getWorkoutLog(userDetails.getId(), pageable, startDate, endDate);
         return ResponseEntity.ok(response);
     }
 

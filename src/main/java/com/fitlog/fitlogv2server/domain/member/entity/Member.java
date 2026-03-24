@@ -1,6 +1,6 @@
 package com.fitlog.fitlogv2server.domain.member.entity;
 
-import com.fitlog.fitlogv2server.global.common.BaseTimeEntity; // 2번에서 만들 BaseTimeEntity
+import com.fitlog.fitlogv2server.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -9,50 +9,85 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA는 기본 생성자가 필요합니다.
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "member")
-public class Member extends BaseTimeEntity { // 2번에서 만들 BaseTimeEntity 상속
+public class Member extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String email; // 소셜 로그인 ID(이메일)로 사용
+    private String email;
 
     @Column(nullable = false)
-    private String nickname; // 앱에서 사용할 닉네임 (초기값은 소셜 프로필 이름)
+    private String nickname;
 
-    private String imageUrl; // 소셜 프로필 이미지 URL (선택 사항)
+    private String imageUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role; // 사용자 권한 (ROLE_USER, ROLE_ADMIN)
+    private Role role;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Provider provider; // 소셜 로그인 제공자 (GOOGLE, KAKAO)
+    private Provider provider;
 
     @Column(nullable = false)
-    private String providerId; // 소셜 로그인 제공자의 고유 ID
+    private String providerId;
+
+    private String phone;
+
+    private String birthDate;
+
+    private Integer height;
+
+    private Integer weight;
+
+    private String goal;
+
+    private String experience;
+
+    @Column(length = 512)
+    private String refreshToken;
 
     @Builder
-    public Member(String email, String nickname, String imageUrl, Role role, Provider provider, String providerId) {
+    public Member(String email, String nickname, String imageUrl, Role role, Provider provider, String providerId,
+                  String phone, String birthDate, Integer height, Integer weight, String goal, String experience) {
         this.email = email;
         this.nickname = nickname;
         this.imageUrl = imageUrl;
         this.role = role;
         this.provider = provider;
         this.providerId = providerId;
+        this.phone = phone;
+        this.birthDate = birthDate;
+        this.height = height;
+        this.weight = weight;
+        this.goal = goal;
+        this.experience = experience;
     }
 
-    // 닉네임 변경 등 프로필 업데이트를 위한 메서드
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
 
-    // 프로필 이미지 업데이트 메서드
     public void updateImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public void updateProfile(String nickname, String phone, String birthDate,
+                              Integer height, Integer weight, String goal, String experience) {
+        if (nickname != null) this.nickname = nickname;
+        if (phone != null) this.phone = phone;
+        if (birthDate != null) this.birthDate = birthDate;
+        if (height != null) this.height = height;
+        if (weight != null) this.weight = weight;
+        if (goal != null) this.goal = goal;
+        if (experience != null) this.experience = experience;
     }
 }
