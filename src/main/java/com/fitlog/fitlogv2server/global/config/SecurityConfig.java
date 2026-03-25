@@ -1,6 +1,7 @@
 package com.fitlog.fitlogv2server.global.config;
 
 import com.fitlog.fitlogv2server.global.security.handler.JwtAuthenticationEntryPoint;
+import com.fitlog.fitlogv2server.global.security.handler.OAuth2AuthenticationFailureHandler;
 import com.fitlog.fitlogv2server.global.security.handler.OAuth2LoginSuccessHandler;
 import com.fitlog.fitlogv2server.global.security.service.CustomOAuth2UserService;
 import com.fitlog.fitlogv2server.global.security.token.JwtAuthenticationFilter; // [추가]
@@ -26,8 +27,9 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter; // [추가]
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint; // [추가]
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -62,6 +64,7 @@ public class SecurityConfig {
                 // [4] OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
                         .userInfoEndpoint(userInfo ->
                                 userInfo.userService(customOAuth2UserService)
                         )

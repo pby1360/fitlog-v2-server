@@ -70,7 +70,7 @@ public class OAuthAttributes {
                 .email(email)
                 .imageUrl(imageUrl)
                 .provider(provider)
-                .providerId((String) attributes.get(nameAttributeKey)) // Google: "sub", Kakao: "id"
+                .providerId(String.valueOf(attributes.get(nameAttributeKey))) // Google: "sub", Kakao: "id" (Long이므로 String.valueOf 사용)
                 .role(Role.USER) // 가입 시 기본 권한
                 .build();
     }
