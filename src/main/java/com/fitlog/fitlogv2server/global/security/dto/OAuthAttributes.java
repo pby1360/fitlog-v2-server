@@ -52,9 +52,15 @@ public class OAuthAttributes {
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
         Map<String, Object> kakaoProfile = (Map<String, Object>) kakaoAccount.get("profile");
 
+        // 이메일 동의 비활성화 시 null → Kakao ID 기반 대체 이메일 생성
+        String email = (String) kakaoAccount.get("email");
+        if (email == null) {
+            email = "kakao_" + attributes.get("id") + "@kakao.local";
+        }
+
         return OAuthAttributes.builder()
                 .name((String) kakaoProfile.get("nickname"))
-                .email((String) kakaoAccount.get("email"))
+                .email(email)
                 .imageUrl((String) kakaoProfile.get("profile_image_url"))
                 .provider(Provider.KAKAO)
                 .attributes(attributes)
