@@ -125,4 +125,14 @@ public class WorkoutSessionController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{sessionId}/exercises/{exerciseId}/start")
+    public ResponseEntity<WorkoutSessionDto.Response> startExercise(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @PathVariable Long exerciseId,
+            @RequestBody WorkoutSessionDto.StartExerciseRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.startExercise(userDetails.getId(), sessionId, exerciseId, request);
+        return ResponseEntity.ok(response);
+    }
+
 }

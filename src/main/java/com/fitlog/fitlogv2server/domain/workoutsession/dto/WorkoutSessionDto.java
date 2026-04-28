@@ -93,6 +93,11 @@ public class WorkoutSessionDto {
     }
 
     @Getter
+    public static class StartExerciseRequest {
+        private ZonedDateTime startedAt;
+    }
+
+    @Getter
     public static class Response {
         private Long id;
         private Long workoutProgramId;
@@ -124,6 +129,7 @@ public class WorkoutSessionDto {
         private String bodyPart;
         private int order;
         private boolean skipped;
+        private ZonedDateTime startedAt;
         private List<SetResponse> sets;
 
         public ExerciseResponse(WorkoutSessionExercise exercise) {
@@ -133,6 +139,7 @@ public class WorkoutSessionDto {
             this.bodyPart = exercise.getWorkout().getWorkoutPart().getName();
             this.order = exercise.getOrder();
             this.skipped = exercise.getSkipped();
+            this.startedAt = exercise.getStartedAt();
             this.sets = exercise.getWorkoutSessionSets().stream()
                     .sorted(Comparator.comparing(WorkoutSessionSet::getSetNumber))
                     .map(SetResponse::new)
