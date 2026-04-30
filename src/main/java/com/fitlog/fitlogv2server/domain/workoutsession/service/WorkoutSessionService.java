@@ -33,6 +33,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 @Service
 @RequiredArgsConstructor
 public class WorkoutSessionService {
@@ -334,6 +337,28 @@ public class WorkoutSessionService {
             }
         }
 
+        return workoutSession;
+    }
+
+    @Transactional
+    public WorkoutSession startExercise(Long memberId, Long sessionId, Long exerciseId, ZonedDateTime startedAt) {
+        WorkoutSession workoutSession = workoutSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Workout session not found"));
+
+        if (!workoutSession.getMember().getId().equals(memberId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        if (startedAt.isBefore(workoutSession.getStartTime())) {
+            throw new IllegalArgumentException("startedAt cannot be before session startTime");
+        }
+
+        WorkoutSessionExercise exercise = workoutSession.getWorkoutSessionExercises().stream()
+                .filter(e -> e.getId().equals(exerciseId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Workout session exercise not found in this session"));
+
+        exercise.updateStartedAt(startedAt);
         return workoutSession;
     }
 

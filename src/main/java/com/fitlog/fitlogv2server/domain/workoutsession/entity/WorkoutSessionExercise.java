@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import org.hibernate.annotations.BatchSize;
@@ -34,6 +35,9 @@ public class WorkoutSessionExercise {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean skipped = false;
 
+    @Column
+    private ZonedDateTime startedAt;
+
     @BatchSize(size = 100)
     @OneToMany(mappedBy = "workoutSessionExercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<WorkoutSessionSet> workoutSessionSets = new HashSet<>();
@@ -60,5 +64,9 @@ public class WorkoutSessionExercise {
 
     public void updateOrder(int order) {
         this.order = order;
+    }
+
+    public void updateStartedAt(ZonedDateTime startedAt) {
+        this.startedAt = startedAt;
     }
 }

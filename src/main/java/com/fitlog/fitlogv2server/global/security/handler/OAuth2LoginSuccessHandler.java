@@ -57,11 +57,12 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         member.updateRefreshToken(refreshToken);
         memberRepository.save(member);
 
-        // 6. 프론트엔드(Vue)로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
-        String targetUrl = UriComponentsBuilder.fromUriString(clientUrl + "/auth/callback") // 프론트의 콜백 URL
+        // 6. 프론트엔드로 리다이렉트 (토큰 및 provider 정보를 쿼리 파라미터로 전달)
+        String targetUrl = UriComponentsBuilder.fromUriString(clientUrl + "/auth/callback")
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
                 .queryParam("imageUrl", member.getImageUrl())
+                .queryParam("provider", member.getProvider().name())
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

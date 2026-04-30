@@ -114,4 +114,10 @@ public class WorkoutSessionFacade {
         WorkoutSession workoutSession = workoutSessionService.getSessionDetail(memberId, sessionId);
         return new WorkoutSessionDto.Response(workoutSession);
     }
+
+    @Transactional
+    public WorkoutSessionDto.Response startExercise(Long memberId, Long sessionId, Long exerciseId, WorkoutSessionDto.StartExerciseRequest request) {
+        WorkoutSession workoutSession = workoutSessionService.startExercise(memberId, sessionId, exerciseId, request.getStartedAt());
+        return new WorkoutSessionDto.Response(workoutSession);
+    }
 }
