@@ -105,6 +105,8 @@ public class WorkoutSessionDto {
         private ZonedDateTime startTime;
         private ZonedDateTime endTime;
         private String status;
+        private Long totalPausedSeconds;
+        private ZonedDateTime lastPausedAt;
         private List<ExerciseResponse> exercises;
 
         public Response(WorkoutSession workoutSession) {
@@ -114,6 +116,8 @@ public class WorkoutSessionDto {
             this.startTime = workoutSession.getStartTime();
             this.endTime = workoutSession.getEndTime();
             this.status = workoutSession.getStatus().name();
+            this.totalPausedSeconds = workoutSession.getTotalPausedSeconds();
+            this.lastPausedAt = workoutSession.getLastPausedAt();
             this.exercises = workoutSession.getWorkoutSessionExercises().stream()
                     .sorted(Comparator.comparing(WorkoutSessionExercise::getOrder))
                     .map(ExerciseResponse::new)
