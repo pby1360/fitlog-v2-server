@@ -98,6 +98,14 @@ public class WorkoutSessionDto {
     }
 
     @Getter
+    public static class CreateSetRequest {
+        private Double weight;
+        private Integer reps;
+        private Integer restTime;
+        private String memo;
+    }
+
+    @Getter
     public static class Response {
         private Long id;
         private Long workoutProgramId;

@@ -135,4 +135,14 @@ public class WorkoutSessionController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{sessionId}/exercises/{workoutSessionExerciseId}/sets")
+    public ResponseEntity<WorkoutSessionDto.Response> addSet(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @PathVariable Long workoutSessionExerciseId,
+            @RequestBody WorkoutSessionDto.CreateSetRequest request) {
+        WorkoutSessionDto.Response response = workoutSessionFacade.addSet(userDetails.getId(), sessionId, workoutSessionExerciseId, request);
+        return ResponseEntity.ok(response);
+    }
+
 }
