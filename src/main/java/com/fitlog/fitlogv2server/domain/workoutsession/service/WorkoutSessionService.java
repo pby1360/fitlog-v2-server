@@ -267,12 +267,17 @@ public class WorkoutSessionService {
 
     @Transactional
     public WorkoutSession addExercise(Long memberId, Long sessionId, WorkoutSessionDto.AddExerciseRequest request) {
-        WorkoutSession workoutSession = findWorkoutSessionByIdAndMemberId(sessionId, memberId);
+        WorkoutSession workoutSession = findOwnedSession(sessionId, memberId);
+        validateSessionModifiable(workoutSession);
+
+        if (request.getSets() == null || request.getSets().isEmpty()) {
+            throw new IllegalArgumentException("sets는 최소 1개 이상이어야 합니다.");
+        }
 
         Workout workout = workoutRepository.findById(request.getWorkoutId())
                 .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
 
-        // Shift existing exercises' order if needed
+        // Shift existing exercises' order to keep ordering consistent
         int newOrder = request.getOrder() != null ? request.getOrder() :
                 workoutSession.getWorkoutSessionExercises().size() + 1;
 
@@ -289,30 +294,22 @@ public class WorkoutSessionService {
                 .build();
         workoutSession.addWorkoutSessionExercise(sessionExercise);
 
-        if (request.getSets() != null && !request.getSets().isEmpty()) {
-            for (WorkoutSessionDto.AddSetRequest setRequest : request.getSets()) {
-                WorkoutSessionSet sessionSet = WorkoutSessionSet.builder()
-                        .workoutSessionExercise(sessionExercise)
-                        .setNumber(setRequest.getSetNumber())
-                        .weight(setRequest.getWeight())
-                        .reps(setRequest.getReps())
-                        .restTime(setRequest.getRestTime())
-                        .memo(setRequest.getMemo())
-                        .completed(false)
-                        .build();
-                sessionExercise.addWorkoutSessionSet(sessionSet);
-            }
-        } else {
-            // Default: add 1 empty set
-            WorkoutSessionSet defaultSet = WorkoutSessionSet.builder()
+        int setNumber = 1;
+        for (WorkoutSessionDto.AddSetRequest setRequest : request.getSets()) {
+            WorkoutSessionSet sessionSet = WorkoutSessionSet.builder()
                     .workoutSessionExercise(sessionExercise)
-                    .setNumber(1)
-                    .weight(0.0)
-                    .reps(0)
-                    .restTime(60)
+                    .setNumber(setNumber++)
+                    .weight(setRequest.getWeight())
+                    .reps(setRequest.getReps())
+                    .restTime(setRequest.getRestTime())
+                    .memo(setRequest.getMemo())
                     .completed(false)
+                    .actualWeight(null)
+                    .actualReps(null)
+                    .actualMemo(null)
+                    .completedAt(null)
                     .build();
-            sessionExercise.addWorkoutSessionSet(defaultSet);
+            sessionExercise.addWorkoutSessionSet(sessionSet);
         }
 
         return workoutSession;
@@ -364,16 +361,8 @@ public class WorkoutSessionService {
 
     @Transactional
     public WorkoutSession addSet(Long memberId, Long sessionId, Long workoutSessionExerciseId, WorkoutSessionDto.CreateSetRequest request) {
-        WorkoutSession workoutSession = workoutSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Workout session not found"));
-
-        if (!workoutSession.getMember().getId().equals(memberId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
-
-        if (workoutSession.getStatus() != SessionStatus.IN_PROGRESS) {
-            throw new IllegalStateException("진행 중인 세션에서만 세트를 추가할 수 있습니다.");
-        }
+        WorkoutSession workoutSession = findOwnedSession(sessionId, memberId);
+        validateSessionModifiable(workoutSession);
 
         if (request.getReps() == null) {
             throw new IllegalArgumentException("reps는 필수입니다.");
@@ -394,7 +383,7 @@ public class WorkoutSessionService {
         WorkoutSessionExercise exercise = workoutSession.getWorkoutSessionExercises().stream()
                 .filter(e -> e.getId().equals(workoutSessionExerciseId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Workout session exercise not found in this session"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workout session exercise not found in this session"));
 
         int nextSetNumber = exercise.getWorkoutSessionSets().stream()
                 .mapToInt(WorkoutSessionSet::getSetNumber)
@@ -424,5 +413,21 @@ public class WorkoutSessionService {
     private WorkoutSession findWorkoutSessionByIdAndMemberId(Long sessionId, Long memberId) {
         return workoutSessionRepository.findByIdAndMemberId(sessionId, memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Workout session not found or does not belong to the member"));
+    }
+
+    private WorkoutSession findOwnedSession(Long sessionId, Long memberId) {
+        WorkoutSession workoutSession = workoutSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workout session not found"));
+        if (!workoutSession.getMember().getId().equals(memberId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+        return workoutSession;
+    }
+
+    private void validateSessionModifiable(WorkoutSession workoutSession) {
+        SessionStatus status = workoutSession.getStatus();
+        if (status == SessionStatus.COMPLETED || status == SessionStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "종료되거나 취소된 세션에는 운동/세트를 추가할 수 없습니다.");
+        }
     }
 }
