@@ -1,6 +1,8 @@
 package com.fitlog.fitlogv2server.domain.workoutsession.service;
 
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
+import com.fitlog.fitlogv2server.domain.workout.entity.Workout;
+import com.fitlog.fitlogv2server.domain.workout.entity.WorkoutPart;
 import com.fitlog.fitlogv2server.domain.workout.repository.WorkoutRepository;
 import com.fitlog.fitlogv2server.domain.workoutprogram.repository.WorkoutProgramRepository;
 import com.fitlog.fitlogv2server.domain.workoutsession.dto.WorkoutSessionDto;
@@ -98,16 +100,32 @@ class WorkoutSessionServiceTest {
     }
 
     @Test
-    void addSet_rejectsWhenSessionNotInProgress() {
-        for (SessionStatus status : List.of(SessionStatus.COMPLETED, SessionStatus.PAUSED, SessionStatus.CANCELLED)) {
+    void addSet_rejectsWhenSessionCompletedOrCancelled() {
+        for (SessionStatus status : List.of(SessionStatus.COMPLETED, SessionStatus.CANCELLED)) {
             WorkoutSession session = buildSession(status, 1);
             given(workoutSessionRepository.findById(SESSION_ID)).willReturn(Optional.of(session));
 
             assertThatThrownBy(() -> workoutSessionService.addSet(
                     MEMBER_ID, SESSION_ID, EXERCISE_ID, buildRequest(60.0, 10, 60, null)))
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(ResponseStatusException.class)
+                    .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
         }
         verify(workoutSessionSetRepository, never()).save(any());
+    }
+
+    @Test
+    void addSet_allowedWhenSessionPaused() {
+        WorkoutSession session = buildSession(SessionStatus.PAUSED, 1, 2);
+        given(workoutSessionRepository.findById(SESSION_ID)).willReturn(Optional.of(session));
+        given(workoutSessionSetRepository.save(any(WorkoutSessionSet.class))).willAnswer(inv -> inv.getArgument(0));
+
+        WorkoutSession result = workoutSessionService.addSet(
+                MEMBER_ID, SESSION_ID, EXERCISE_ID, buildRequest(60.0, 10, 60, null));
+
+        ArgumentCaptor<WorkoutSessionSet> captor = ArgumentCaptor.forClass(WorkoutSessionSet.class);
+        verify(workoutSessionSetRepository).save(captor.capture());
+        assertThat(captor.getValue().getSetNumber()).isEqualTo(3);
+        assertThat(result.getStatus()).isEqualTo(SessionStatus.PAUSED);
     }
 
     @Test
@@ -128,7 +146,8 @@ class WorkoutSessionServiceTest {
 
         assertThatThrownBy(() -> workoutSessionService.addSet(
                 MEMBER_ID, SESSION_ID, EXERCISE_ID, buildRequest(60.0, 10, 60, null)))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
     }
 
     @Test
@@ -138,7 +157,8 @@ class WorkoutSessionServiceTest {
 
         assertThatThrownBy(() -> workoutSessionService.addSet(
                 MEMBER_ID, SESSION_ID, 999L, buildRequest(60.0, 10, 60, null)))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
         verify(workoutSessionSetRepository, never()).save(any());
     }
 
@@ -160,6 +180,80 @@ class WorkoutSessionServiceTest {
         assertThatThrownBy(() -> workoutSessionService.addSet(
                 MEMBER_ID, SESSION_ID, EXERCISE_ID, buildRequest(60.0, 10, null, null)))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void addExercise_appendsExerciseWithRequestedSets() {
+        WorkoutSession session = buildSession(SessionStatus.IN_PROGRESS, 1);
+        given(workoutSessionRepository.findById(SESSION_ID)).willReturn(Optional.of(session));
+        given(workoutRepository.findById(12L)).willReturn(Optional.of(buildWorkout()));
+
+        WorkoutSessionDto.AddExerciseRequest request = buildAddExerciseRequest(12L, 2,
+                List.of(buildAddSetRequest(40.0, 10, 60, "첫 세트"), buildAddSetRequest(45.0, 8, 90, null)));
+
+        WorkoutSession result = workoutSessionService.addExercise(MEMBER_ID, SESSION_ID, request);
+
+        WorkoutSessionExercise added = result.getWorkoutSessionExercises().stream()
+                .filter(e -> e.getOrder() == 2)
+                .findFirst()
+                .orElseThrow();
+        assertThat(added.getWorkout().getId()).isEqualTo(12L);
+        assertThat(added.getSkipped()).isFalse();
+        assertThat(added.getStartedAt()).isNull();
+        assertThat(added.getWorkoutSessionSets()).hasSize(2);
+        assertThat(added.getWorkoutSessionSets())
+                .extracting(WorkoutSessionSet::getSetNumber)
+                .containsExactlyInAnyOrder(1, 2);
+        assertThat(added.getWorkoutSessionSets())
+                .allMatch(s -> Boolean.FALSE.equals(s.getCompleted())
+                        && s.getActualWeight() == null
+                        && s.getActualReps() == null
+                        && s.getActualMemo() == null
+                        && s.getCompletedAt() == null);
+    }
+
+    @Test
+    void addExercise_rejectsWhenSetsEmpty() {
+        WorkoutSession session = buildSession(SessionStatus.IN_PROGRESS, 1);
+        given(workoutSessionRepository.findById(SESSION_ID)).willReturn(Optional.of(session));
+
+        assertThatThrownBy(() -> workoutSessionService.addExercise(
+                MEMBER_ID, SESSION_ID, buildAddExerciseRequest(12L, 2, List.of())))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void addExercise_rejectsWhenSessionBelongsToAnotherMember() {
+        WorkoutSession session = buildSession(SessionStatus.IN_PROGRESS, 1);
+        given(workoutSessionRepository.findById(SESSION_ID)).willReturn(Optional.of(session));
+
+        assertThatThrownBy(() -> workoutSessionService.addExercise(
+                999L, SESSION_ID, buildAddExerciseRequest(12L, 2, List.of(buildAddSetRequest(40.0, 10, 60, null)))))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+    }
+
+    @Test
+    void addExercise_rejectsWhenSessionNotFound() {
+        given(workoutSessionRepository.findById(SESSION_ID)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> workoutSessionService.addExercise(
+                MEMBER_ID, SESSION_ID, buildAddExerciseRequest(12L, 2, List.of(buildAddSetRequest(40.0, 10, 60, null)))))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void addExercise_rejectsWhenSessionCompletedOrCancelled() {
+        for (SessionStatus status : List.of(SessionStatus.COMPLETED, SessionStatus.CANCELLED)) {
+            WorkoutSession session = buildSession(status, 1);
+            given(workoutSessionRepository.findById(SESSION_ID)).willReturn(Optional.of(session));
+
+            assertThatThrownBy(() -> workoutSessionService.addExercise(
+                    MEMBER_ID, SESSION_ID, buildAddExerciseRequest(12L, 2, List.of(buildAddSetRequest(40.0, 10, 60, null)))))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+        }
     }
 
     private WorkoutSession buildSession(SessionStatus status, int... existingSetNumbers) {
@@ -207,5 +301,31 @@ class WorkoutSessionServiceTest {
         ReflectionTestUtils.setField(request, "restTime", restTime);
         ReflectionTestUtils.setField(request, "memo", memo);
         return request;
+    }
+
+    private WorkoutSessionDto.AddExerciseRequest buildAddExerciseRequest(Long workoutId, Integer order, List<WorkoutSessionDto.AddSetRequest> sets) {
+        WorkoutSessionDto.AddExerciseRequest request = new WorkoutSessionDto.AddExerciseRequest();
+        ReflectionTestUtils.setField(request, "workoutId", workoutId);
+        ReflectionTestUtils.setField(request, "order", order);
+        ReflectionTestUtils.setField(request, "sets", sets);
+        return request;
+    }
+
+    private WorkoutSessionDto.AddSetRequest buildAddSetRequest(Double weight, Integer reps, Integer restTime, String memo) {
+        WorkoutSessionDto.AddSetRequest request = new WorkoutSessionDto.AddSetRequest();
+        ReflectionTestUtils.setField(request, "setNumber", 1);
+        ReflectionTestUtils.setField(request, "weight", weight);
+        ReflectionTestUtils.setField(request, "reps", reps);
+        ReflectionTestUtils.setField(request, "restTime", restTime);
+        ReflectionTestUtils.setField(request, "memo", memo);
+        return request;
+    }
+
+    private Workout buildWorkout() {
+        WorkoutPart part = WorkoutPart.builder().name("가슴").build();
+        ReflectionTestUtils.setField(part, "id", 5L);
+        Workout workout = Workout.builder().name("벤치프레스").workoutPart(part).build();
+        ReflectionTestUtils.setField(workout, "id", 12L);
+        return workout;
     }
 }
