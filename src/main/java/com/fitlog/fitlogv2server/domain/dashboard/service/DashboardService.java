@@ -29,8 +29,7 @@ public class DashboardService {
 
     private final WorkoutSessionRepository workoutSessionRepository;
 
-    public DashboardStatsDto getStats(Long memberId) {
-        ZoneId zone = ZoneId.systemDefault();
+    public DashboardStatsDto getStats(Long memberId, ZoneId zone) {
         LocalDate today = LocalDate.now(zone);
 
         LocalDate weekStart = today.with(DayOfWeek.MONDAY);

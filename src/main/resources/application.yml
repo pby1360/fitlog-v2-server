@@ -18,6 +18,16 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC # 모든 타임스탬프를 UTC 기준으로 저장/조회
+
+  # --- 직렬화 설정: 시각은 UTC ISO-8601(offset 포함)로 응답, 클라이언트가 로컬 시간대로 변환 ---
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
 
   security:
     oauth2:

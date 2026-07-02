@@ -2,6 +2,7 @@ package com.fitlog.fitlogv2server.domain.workoutsession.controller;
 
 import com.fitlog.fitlogv2server.domain.workoutsession.dto.WorkoutSessionDto;
 import com.fitlog.fitlogv2server.domain.workoutsession.facade.WorkoutSessionFacade;
+import com.fitlog.fitlogv2server.global.common.AppTimeZone;
 import com.fitlog.fitlogv2server.global.security.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -112,8 +113,10 @@ public class WorkoutSessionController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        WorkoutSessionDto.LogPageResponse response = workoutSessionFacade.getWorkoutLog(userDetails.getId(), pageable, startDate, endDate);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String timeZone) {
+        WorkoutSessionDto.LogPageResponse response = workoutSessionFacade.getWorkoutLog(
+                userDetails.getId(), pageable, startDate, endDate, AppTimeZone.resolveOrUtc(timeZone));
         return ResponseEntity.ok(response);
     }
 

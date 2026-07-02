@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -52,6 +53,6 @@ public class WorkoutSessionSet {
         this.actualReps = actualReps;
         this.actualMemo = actualMemo;
         this.completed = true;
-        this.completedAt = ZonedDateTime.now();
+        this.completedAt = ZonedDateTime.now(ZoneOffset.UTC);
     }
 }

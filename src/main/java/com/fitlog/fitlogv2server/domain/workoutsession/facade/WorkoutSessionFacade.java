@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -84,15 +84,16 @@ public class WorkoutSessionFacade {
     }
 
     @Transactional(readOnly = true)
-    public WorkoutSessionDto.LogPageResponse getWorkoutLog(Long memberId, Pageable pageable, LocalDate startDate, LocalDate endDate) {
+    public WorkoutSessionDto.LogPageResponse getWorkoutLog(Long memberId, Pageable pageable, LocalDate startDate, LocalDate endDate, ZoneId zoneId) {
         Page<WorkoutSessionDto.LogSummaryResponse> page;
         long totalDurationSeconds;
         long totalCompletedSets;
         long totalSets;
 
         if (startDate != null && endDate != null) {
-            ZonedDateTime start = startDate.atStartOfDay(ZoneOffset.UTC);
-            ZonedDateTime end = endDate.plusDays(1).atStartOfDay(ZoneOffset.UTC);
+            // 사용자의 시간대 기준 하루 경계를 UTC 인스턴트로 변환해 필터링한다.
+            ZonedDateTime start = startDate.atStartOfDay(zoneId);
+            ZonedDateTime end = endDate.plusDays(1).atStartOfDay(zoneId);
             page = workoutSessionService.getCompletedSessions(memberId, pageable, start, end)
                     .map(WorkoutSessionDto.LogSummaryResponse::new);
             totalDurationSeconds = workoutSessionService.sumDurationSeconds(memberId, start, end);
