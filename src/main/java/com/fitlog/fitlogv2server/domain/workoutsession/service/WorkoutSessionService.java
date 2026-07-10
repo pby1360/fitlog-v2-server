@@ -51,6 +51,10 @@ public class WorkoutSessionService {
         WorkoutProgram workoutProgram = workoutProgramRepository.findById(request.getWorkoutProgramId())
                 .orElseThrow(() -> new IllegalArgumentException("Workout program not found"));
 
+        if (workoutProgram.isDeleted()) {
+            throw new IllegalArgumentException("Cannot start a session with a deleted workout program.");
+        }
+
         WorkoutSession workoutSession = WorkoutSession.builder()
                 .member(member)
                 .workoutProgram(workoutProgram)

@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +29,9 @@ public class WorkoutProgram extends BaseTimeEntity {
 
     private String description; // 예: "월/수/금 진행"
 
+    // 소프트삭제: 값이 있으면 삭제된 프로그램으로 취급 (세션이 참조 중이므로 물리 삭제 금지)
+    private LocalDateTime deletedAt;
+
     // 하위: 파트 목록 (Day 1, Day 2...)
     @OneToMany(mappedBy = "workoutProgram", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkoutProgramPart> parts = new ArrayList<>();
@@ -42,5 +46,13 @@ public class WorkoutProgram extends BaseTimeEntity {
     public void update(String name, String description) {
         this.name = name;
         this.description = description;
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }
