@@ -4,6 +4,7 @@ import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.domain.workout.entity.Workout;
 import com.fitlog.fitlogv2server.domain.workout.entity.WorkoutPart;
 import com.fitlog.fitlogv2server.domain.workout.repository.WorkoutRepository;
+import com.fitlog.fitlogv2server.domain.workoutprogram.entity.WorkoutProgram;
 import com.fitlog.fitlogv2server.domain.workoutprogram.repository.WorkoutProgramRepository;
 import com.fitlog.fitlogv2server.domain.workoutsession.dto.WorkoutSessionDto;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.SessionStatus;
@@ -13,6 +14,7 @@ import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSessionSet;
 import com.fitlog.fitlogv2server.domain.workoutsession.repository.WorkoutSessionExerciseRepository;
 import com.fitlog.fitlogv2server.domain.workoutsession.repository.WorkoutSessionRepository;
 import com.fitlog.fitlogv2server.domain.workoutsession.repository.WorkoutSessionSetRepository;
+import com.fitlog.fitlogv2server.global.common.AppTimeZone;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -23,7 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +32,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -55,6 +58,30 @@ class WorkoutSessionServiceTest {
     private static final Long MEMBER_ID = 10L;
     private static final Long SESSION_ID = 1L;
     private static final Long EXERCISE_ID = 100L;
+
+    @Test
+    void startSession_recordsStartTimeInKst() {
+        Member member = Member.builder()
+                .email("user@example.com")
+                .nickname("user")
+                .build();
+        ReflectionTestUtils.setField(member, "id", MEMBER_ID);
+
+        WorkoutProgram program = mock(WorkoutProgram.class);
+        given(program.getParts()).willReturn(List.of());
+        given(workoutProgramRepository.findById(anyLong())).willReturn(Optional.of(program));
+        given(workoutSessionRepository.save(any(WorkoutSession.class))).willAnswer(inv -> inv.getArgument(0));
+
+        WorkoutSessionDto.StartRequest request = new WorkoutSessionDto.StartRequest();
+        ReflectionTestUtils.setField(request, "workoutProgramId", 1L);
+
+        WorkoutSession result = workoutSessionService.startSession(member, request);
+
+        assertThat(result.getStartTime()).isNotNull();
+        // created_at(감사, KST)과 동일하게 KST 벽시계로 저장되어야 한다 (UTC 9시간 오차 회귀 방지)
+        assertThat(result.getStartTime().getZone()).isEqualTo(AppTimeZone.KST);
+        assertThat(result.getStatus()).isEqualTo(SessionStatus.IN_PROGRESS);
+    }
 
     @Test
     void addSet_appendsSetToEndWithSequentialSetNumber() {
@@ -265,7 +292,7 @@ class WorkoutSessionServiceTest {
 
         WorkoutSession session = WorkoutSession.builder()
                 .member(member)
-                .startTime(ZonedDateTime.now(ZoneOffset.UTC))
+                .startTime(ZonedDateTime.now(AppTimeZone.KST))
                 .status(status)
                 .build();
         ReflectionTestUtils.setField(session, "id", SESSION_ID);

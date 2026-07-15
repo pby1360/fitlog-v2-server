@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.workoutsession.entity;
 
+import com.fitlog.fitlogv2server.global.common.AppTimeZone;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -52,6 +53,6 @@ public class WorkoutSessionSet {
         this.actualReps = actualReps;
         this.actualMemo = actualMemo;
         this.completed = true;
-        this.completedAt = ZonedDateTime.now();
+        this.completedAt = ZonedDateTime.now(AppTimeZone.KST);
     }
 }

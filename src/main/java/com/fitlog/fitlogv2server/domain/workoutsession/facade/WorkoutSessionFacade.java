@@ -11,8 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fitlog.fitlogv2server.global.common.AppTimeZone;
+
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -91,8 +92,8 @@ public class WorkoutSessionFacade {
         long totalSets;
 
         if (startDate != null && endDate != null) {
-            ZonedDateTime start = startDate.atStartOfDay(ZoneOffset.UTC);
-            ZonedDateTime end = endDate.plusDays(1).atStartOfDay(ZoneOffset.UTC);
+            ZonedDateTime start = startDate.atStartOfDay(AppTimeZone.KST);
+            ZonedDateTime end = endDate.plusDays(1).atStartOfDay(AppTimeZone.KST);
             page = workoutSessionService.getCompletedSessions(memberId, pageable, start, end)
                     .map(WorkoutSessionDto.LogSummaryResponse::new);
             totalDurationSeconds = workoutSessionService.sumDurationSeconds(memberId, start, end);

@@ -25,7 +25,8 @@ import org.springframework.data.domain.Pageable;
 import com.fitlog.fitlogv2server.domain.workout.entity.Workout;
 import com.fitlog.fitlogv2server.domain.workout.repository.WorkoutRepository;
 
-import java.time.ZoneOffset;
+import com.fitlog.fitlogv2server.global.common.AppTimeZone;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class WorkoutSessionService {
         WorkoutSession workoutSession = WorkoutSession.builder()
                 .member(member)
                 .workoutProgram(workoutProgram)
-                .startTime(ZonedDateTime.now(ZoneOffset.UTC))
+                .startTime(ZonedDateTime.now(AppTimeZone.KST))
                 .status(SessionStatus.IN_PROGRESS)
                 .build();
 
@@ -142,7 +143,7 @@ public class WorkoutSessionService {
         workoutSessionSet.completeSet(request.getActualWeight(), request.getActualReps(), request.getMemo());
 
         if (workoutSession.isAllSetsCompleted()) {
-            workoutSession.updateStatusAndEndTime(SessionStatus.COMPLETED, ZonedDateTime.now(ZoneOffset.UTC));
+            workoutSession.updateStatusAndEndTime(SessionStatus.COMPLETED, ZonedDateTime.now(AppTimeZone.KST));
         }
 
         return workoutSession;
@@ -154,7 +155,7 @@ public class WorkoutSessionService {
         if (workoutSession.getStatus() == SessionStatus.PAUSED) {
             throw new IllegalStateException("Workout session is already paused.");
         }
-        workoutSession.pause(ZonedDateTime.now(ZoneOffset.UTC));
+        workoutSession.pause(ZonedDateTime.now(AppTimeZone.KST));
         return workoutSession;
     }
 
@@ -164,7 +165,7 @@ public class WorkoutSessionService {
         if (workoutSession.getStatus() == SessionStatus.IN_PROGRESS) {
             throw new IllegalStateException("Workout session is already in progress.");
         }
-        workoutSession.resume(ZonedDateTime.now(ZoneOffset.UTC));
+        workoutSession.resume(ZonedDateTime.now(AppTimeZone.KST));
         return workoutSession;
     }
 
@@ -243,7 +244,7 @@ public class WorkoutSessionService {
         }
 
         if (workoutSession.isAllSetsCompleted()) {
-            workoutSession.updateStatusAndEndTime(SessionStatus.COMPLETED, ZonedDateTime.now(ZoneOffset.UTC));
+            workoutSession.updateStatusAndEndTime(SessionStatus.COMPLETED, ZonedDateTime.now(AppTimeZone.KST));
         }
 
         return workoutSession;
