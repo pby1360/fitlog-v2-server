@@ -46,6 +46,10 @@ public class WorkoutProgramService {
             throw new IllegalArgumentException("You do not have permission to update this workout program.");
         }
 
+        if (workoutProgram.isDeleted()) {
+            throw new IllegalArgumentException("Cannot update a deleted workout program.");
+        }
+
         workoutProgram.update(requestDto.name(), requestDto.description());
 
         // 기존 parts 삭제 후 새로 추가 (orphanRemoval = true 덕분에 자동으로 하위 엔티티 삭제)
@@ -62,7 +66,10 @@ public class WorkoutProgramService {
             throw new IllegalArgumentException("You do not have permission to delete this workout program.");
         }
 
-        workoutProgramRepository.delete(workoutProgram);
+        // 물리 삭제 대신 소프트삭제: 운동 세션이 프로그램을 참조하고 있어 FK 제약 위반을 방지하고 이력을 보존한다.
+        if (!workoutProgram.isDeleted()) {
+            workoutProgram.softDelete();
+        }
     }
 
     private void addPartsToWorkoutProgram(WorkoutProgram workoutProgram, List<WorkoutProgramDto.Request.PartDto> partDtos) {
@@ -103,7 +110,7 @@ public class WorkoutProgramService {
 
     @Transactional(readOnly = true)
     public List<WorkoutProgramDto.Response> findAllPrograms(Long memberId) {
-        return workoutProgramRepository.findAllByMemberId(memberId).stream()
+        return workoutProgramRepository.findAllByMemberIdAndDeletedAtIsNull(memberId).stream()
                 .map(WorkoutProgramDto.Response::new)
                 .collect(Collectors.toList());
     }
