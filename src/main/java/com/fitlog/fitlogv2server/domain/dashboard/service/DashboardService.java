@@ -6,6 +6,7 @@ import com.fitlog.fitlogv2server.domain.workoutsession.repository.MonthlyStatPro
 import com.fitlog.fitlogv2server.domain.workoutsession.repository.RecentWorkoutProjection;
 import com.fitlog.fitlogv2server.domain.workoutsession.repository.WeeklyProgressProjection;
 import com.fitlog.fitlogv2server.domain.workoutsession.repository.WorkoutSessionRepository;
+import com.fitlog.fitlogv2server.global.common.AppTimeZone;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,7 @@ public class DashboardService {
     private final WorkoutSessionRepository workoutSessionRepository;
 
     public DashboardStatsDto getStats(Long memberId) {
-        ZoneId zone = ZoneId.systemDefault();
+        ZoneId zone = AppTimeZone.KST;
         LocalDate today = LocalDate.now(zone);
 
         LocalDate weekStart = today.with(DayOfWeek.MONDAY);
