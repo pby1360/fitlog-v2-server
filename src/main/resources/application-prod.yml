@@ -1,0 +1,79 @@
+spring:
+  sql:
+    init:
+      mode: never
+
+  # --- DB: Supabase 트랜잭션 풀러(6543) 사용 ---
+  # 접속 정보는 전부 환경변수/SSM에서 주입 (평문 금지)
+  # SPRING_DATASOURCE_URL 예시:
+  #   jdbc:postgresql://aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?prepareThreshold=0
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # App Runner 0.5vCPU/1GB + Supabase 풀러에 맞춘 소규모 커넥션 풀
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 900000
+
+  jpa:
+    defer-datasource-initialization: true
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_post
+            scope:
+              - profile_nickname
+              - profile_image
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiry: ${ACCESS_TOKEN_EXPIRY:3600}
+  refresh-token-expiry: ${REFRESH_TOKEN_EXPIRY:604800}
+
+app:
+  client-url: ${FRONTEND_URL}
+
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: native
+
+# --- 로깅: App Runner는 stdout을 CloudWatch로 수집 (파일 경로 사용 불가) ---
+logging:
+  level:
+    root: INFO
+    com.fitlog: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"

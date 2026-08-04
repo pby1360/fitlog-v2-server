@@ -6,3 +6,7 @@ bin/
 out/
 Dockerfile
 .dockerignore
+src/main/resources/application-local.yml
+src/main/resources/application-*.bak
+.env
+.env.*
