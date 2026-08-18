@@ -37,4 +37,14 @@ out/
 ### VS Code ###
 .vscode/
 
-/src/main/resources/application-*
+### 환경별 설정 ###
+# application-prod.yml 은 secret 없이 ${환경변수} 참조만 하므로 커밋 대상.
+# CI(GitHub Actions)에서 빌드할 때 이 파일이 없으면 prod 프로파일이 조용히 누락되어
+# ddl-auto 가 validate → update 로 떨어진다(운영 DB 스키마 자동변경 위험). 반드시 추적할 것.
+/src/main/resources/application-local.yml
+/src/main/resources/application-*.bak
+
+### 로컬 환경변수 (평문 secret) ###
+.env
+.env.*
+!.env.example
