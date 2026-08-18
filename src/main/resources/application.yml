@@ -54,6 +54,9 @@ jwt:
 # --- 앱 관련 설정: 프론트엔드 URL 등 (CORS, 리디렉션 용) ---
 app:
   client-url: ${FRONTEND_URL:http://localhost:3000}
+  cors:
+    # CORS 허용 오리진(쉼표 구분). 로컬 개발 기본값 + FRONTEND_URL
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
 
 # --- 배포 필수 설정 ---
 server:
