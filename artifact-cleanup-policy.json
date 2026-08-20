@@ -1,0 +1,16 @@
+[
+  {
+    "name": "keep-recent-versions",
+    "action": { "type": "Keep" },
+    "mostRecentVersions": {
+      "keepCount": 6
+    }
+  },
+  {
+    "name": "delete-old-versions",
+    "action": { "type": "Delete" },
+    "condition": {
+      "olderThan": "14d"
+    }
+  }
+]
