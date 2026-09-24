@@ -148,13 +148,13 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
 
     @Query(value = """
             SELECT
-                EXTRACT(ISODOW FROM start_time)::int AS dayOfWeek,
+                EXTRACT(ISODOW FROM start_time AT TIME ZONE 'Asia/Seoul')::int AS dayOfWeek,
                 COUNT(*) AS workoutCount,
                 COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) - COALESCE(total_paused_seconds, 0)), 0) AS totalDurationSeconds
             FROM workout_session
             WHERE member_id = :memberId AND status = 'COMPLETED'
             AND start_time >= :from AND start_time < :to
-            GROUP BY EXTRACT(ISODOW FROM start_time)
+            GROUP BY EXTRACT(ISODOW FROM start_time AT TIME ZONE 'Asia/Seoul')
             """, nativeQuery = true)
     List<WeeklyProgressProjection> findWeeklyProgress(@Param("memberId") Long memberId,
             @Param("from") ZonedDateTime from,
@@ -187,8 +187,8 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
 
     @Query(value = """
             SELECT
-                EXTRACT(YEAR FROM start_time)::int AS year,
-                EXTRACT(MONTH FROM start_time)::int AS month,
+                EXTRACT(YEAR FROM start_time AT TIME ZONE 'Asia/Seoul')::int AS year,
+                EXTRACT(MONTH FROM start_time AT TIME ZONE 'Asia/Seoul')::int AS month,
                 COUNT(*) AS workoutCount,
                 COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) - COALESCE(total_paused_seconds, 0)), 0) AS totalDurationSeconds
             FROM workout_session

@@ -10,7 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class WorkoutProgram extends BaseTimeEntity {
     private String description; // 예: "월/수/금 진행"
 
     // 소프트삭제: 값이 있으면 삭제된 프로그램으로 취급 (세션이 참조 중이므로 물리 삭제 금지)
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     // 하위: 파트 목록 (Day 1, Day 2...)
     // 저장한 순서(orders)대로 조회한다. 컬렉션은 묶음 조회로 N+1 을 줄인다.
@@ -58,6 +58,6 @@ public class WorkoutProgram extends BaseTimeEntity {
     }
 
     public void softDelete() {
-        this.deletedAt = LocalDateTime.now();
+        this.deletedAt = Instant.now();
     }
 }

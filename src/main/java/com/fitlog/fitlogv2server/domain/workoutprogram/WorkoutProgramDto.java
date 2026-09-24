@@ -4,6 +4,7 @@ import com.fitlog.fitlogv2server.domain.workoutprogram.entity.WorkoutProgram;
 import com.fitlog.fitlogv2server.domain.workoutprogram.entity.WorkoutProgramExercise;
 import com.fitlog.fitlogv2server.domain.workoutprogram.entity.WorkoutProgramPart;
 import com.fitlog.fitlogv2server.domain.workoutprogram.entity.WorkoutProgramSet;
+import com.fitlog.fitlogv2server.global.common.AppTimeZone;
 import com.fitlog.fitlogv2server.global.common.ValidationLimits;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
@@ -100,7 +101,7 @@ public class WorkoutProgramDto {
 
         public Response(WorkoutProgram program) {
             this(program.getId(), program.getName(), program.getDescription(),
-                    program.getCreatedAt().toString().substring(0, 10), // YYYY-MM-DD 형식
+                    AppTimeZone.toKstDateString(program.getCreatedAt()), // 생성일(한국 날짜, YYYY-MM-DD)
                     program.getParts().stream()
                             .sorted(Comparator.comparingInt(WorkoutProgramPart::getOrder))
                             .map(ProgramPartDto::new).toList());

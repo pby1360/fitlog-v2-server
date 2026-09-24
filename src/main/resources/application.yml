@@ -17,6 +17,9 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    placeholders:
+      # V6: 시간대 없이 저장돼 있던 기존 감사 시각의 해석 기준 (운영 컨테이너 기본값 UTC)
+      legacy_timestamp_zone: ${LEGACY_TIMESTAMP_ZONE:UTC}
 
   jpa:
     hibernate:
