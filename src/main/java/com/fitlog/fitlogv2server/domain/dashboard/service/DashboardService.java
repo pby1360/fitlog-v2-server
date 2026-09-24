@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -77,14 +76,11 @@ public class DashboardService {
     }
 
     private int calculateStreak(Long memberId, ZoneId zone) {
-        List<Timestamp> startTimes = workoutSessionRepository.findCompletedStartTimes(memberId);
-        if (startTimes == null || startTimes.isEmpty()) return 0;
+        List<String> workoutDates = workoutSessionRepository.findCompletedWorkoutDatesKst(memberId);
+        if (workoutDates == null || workoutDates.isEmpty()) return 0;
 
-        Set<LocalDate> dates = startTimes.stream()
-                .map(ts -> {
-                    // Convert SQL Timestamp -> Instant -> ZonedDateTime in the requested zone
-                    return ts.toInstant().atZone(zone).toLocalDate();
-                })
+        Set<LocalDate> dates = workoutDates.stream()
+                .map(LocalDate::parse)
                 .collect(Collectors.toSet());
 
         LocalDate today = LocalDate.now(zone);

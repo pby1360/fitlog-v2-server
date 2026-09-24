@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.workoutsession.controller;
 
+import jakarta.validation.Valid;
 import com.fitlog.fitlogv2server.domain.workoutsession.dto.WorkoutSessionDto;
 import com.fitlog.fitlogv2server.domain.workoutsession.facade.WorkoutSessionFacade;
 import com.fitlog.fitlogv2server.global.security.service.CustomUserDetails;
@@ -24,7 +25,7 @@ public class WorkoutSessionController {
     @PostMapping
     public ResponseEntity<WorkoutSessionDto.Response> startSession(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody WorkoutSessionDto.StartRequest request) {
+            @Valid @RequestBody WorkoutSessionDto.StartRequest request) {
         WorkoutSessionDto.Response response = workoutSessionFacade.startSession(userDetails.getId(), request);
         return ResponseEntity.ok(response);
     }
@@ -41,7 +42,7 @@ public class WorkoutSessionController {
     public ResponseEntity<WorkoutSessionDto.Response> completeSet(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long sessionId,
-            @RequestBody WorkoutSessionDto.CompleteSetRequest request) {
+            @Valid @RequestBody WorkoutSessionDto.CompleteSetRequest request) {
         WorkoutSessionDto.Response response = workoutSessionFacade.completeSet(userDetails.getId(), sessionId, request);
         return ResponseEntity.ok(response);
     }
@@ -66,7 +67,7 @@ public class WorkoutSessionController {
     public ResponseEntity<WorkoutSessionDto.Response> skipExercise(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long sessionId,
-            @RequestBody WorkoutSessionDto.SkipExerciseRequest request) {
+            @Valid @RequestBody WorkoutSessionDto.SkipExerciseRequest request) {
         WorkoutSessionDto.Response response = workoutSessionFacade.skipExercise(userDetails.getId(), sessionId, request);
         return ResponseEntity.ok(response);
     }
@@ -75,7 +76,7 @@ public class WorkoutSessionController {
     public ResponseEntity<WorkoutSessionDto.Response> reorderExercises(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long sessionId,
-            @RequestBody WorkoutSessionDto.ReorderExercisesRequest request) {
+            @Valid @RequestBody WorkoutSessionDto.ReorderExercisesRequest request) {
         WorkoutSessionDto.Response response = workoutSessionFacade.reorderExercises(userDetails.getId(), sessionId, request);
         return ResponseEntity.ok(response);
     }
@@ -84,7 +85,7 @@ public class WorkoutSessionController {
     public ResponseEntity<WorkoutSessionDto.Response> addExercise(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long sessionId,
-            @RequestBody WorkoutSessionDto.AddExerciseRequest request) {
+            @Valid @RequestBody WorkoutSessionDto.AddExerciseRequest request) {
         WorkoutSessionDto.Response response = workoutSessionFacade.addExercise(userDetails.getId(), sessionId, request);
         return ResponseEntity.ok(response);
     }
@@ -102,7 +103,7 @@ public class WorkoutSessionController {
     public ResponseEntity<WorkoutSessionDto.Response> endSession(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long sessionId,
-            @RequestBody WorkoutSessionDto.EndRequest request) {
+            @Valid @RequestBody WorkoutSessionDto.EndRequest request) {
         WorkoutSessionDto.Response response = workoutSessionFacade.endSession(userDetails.getId(), sessionId, request);
         return ResponseEntity.ok(response);
     }
@@ -130,7 +131,7 @@ public class WorkoutSessionController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long sessionId,
             @PathVariable Long exerciseId,
-            @RequestBody WorkoutSessionDto.StartExerciseRequest request) {
+            @Valid @RequestBody WorkoutSessionDto.StartExerciseRequest request) {
         WorkoutSessionDto.Response response = workoutSessionFacade.startExercise(userDetails.getId(), sessionId, exerciseId, request);
         return ResponseEntity.ok(response);
     }
@@ -140,7 +141,7 @@ public class WorkoutSessionController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long sessionId,
             @PathVariable Long workoutSessionExerciseId,
-            @RequestBody WorkoutSessionDto.CreateSetRequest request) {
+            @Valid @RequestBody WorkoutSessionDto.CreateSetRequest request) {
         WorkoutSessionDto.Response response = workoutSessionFacade.addSet(userDetails.getId(), sessionId, workoutSessionExerciseId, request);
         return ResponseEntity.ok(response);
     }

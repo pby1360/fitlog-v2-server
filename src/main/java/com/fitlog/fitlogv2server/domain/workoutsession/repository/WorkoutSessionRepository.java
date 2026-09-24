@@ -2,7 +2,9 @@ package com.fitlog.fitlogv2server.domain.workoutsession.repository;
 
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.SessionStatus;
 import com.fitlog.fitlogv2server.domain.workoutsession.entity.WorkoutSession;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -10,22 +12,22 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.sql.Timestamp;
 
 public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, Long> {
-    @Query("SELECT ws FROM WorkoutSession ws " +
-            "LEFT JOIN FETCH ws.workoutProgram " +
-            "LEFT JOIN FETCH ws.workoutSessionExercises wse " +
-            "LEFT JOIN FETCH wse.workout " +
-            "LEFT JOIN FETCH wse.workoutSessionSets " +
-            "WHERE ws.member.id = :memberId AND ws.status IN (:statuses) " +
-            "ORDER BY ws.id DESC")
-    Optional<WorkoutSession> findLatestWorkoutSessionByMemberIdAndStatuses(@Param("memberId") Long memberId, @Param("statuses") Set<SessionStatus> statuses);
+    // 활성 세션(진행/일시정지) 중 가장 최근 1건. 상세는 findDetailByIdAndMemberId 로 따로 조회한다.
+    Optional<WorkoutSession> findFirstByMemberIdAndStatusInOrderByIdDesc(Long memberId, Collection<SessionStatus> statuses);
 
-    Optional<WorkoutSession> findByIdAndMemberId(Long sessionId, Long memberId);
+    boolean existsByMemberIdAndStatusIn(Long memberId, Collection<SessionStatus> statuses);
+
+    // 세션 변경은 행 잠금으로 직렬화한다 (동시 세트 추가/완료 시 번호 중복·완료 판정 경합 방지)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT ws FROM WorkoutSession ws WHERE ws.id = :id")
+    Optional<WorkoutSession> findByIdForUpdate(@Param("id") Long id);
 
     @Query("SELECT ws FROM WorkoutSession ws " +
             "JOIN FETCH ws.workoutProgram " +
@@ -138,9 +140,11 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
             @Param("from") ZonedDateTime from,
             @Param("to") ZonedDateTime to);
 
-    @Query(value = "SELECT start_time FROM workout_session WHERE member_id = :memberId AND status = 'COMPLETED'",
+    // 완료한 운동의 한국 날짜(YYYY-MM-DD) 목록. 드라이버의 시간 타입 매핑에 의존하지 않도록 문자열로 반환한다.
+    @Query(value = "SELECT DISTINCT to_char(start_time AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') " +
+            "FROM workout_session WHERE member_id = :memberId AND status = 'COMPLETED' AND start_time IS NOT NULL",
             nativeQuery = true)
-    List<Timestamp> findCompletedStartTimes(@Param("memberId") Long memberId);
+    List<String> findCompletedWorkoutDatesKst(@Param("memberId") Long memberId);
 
     @Query(value = """
             SELECT

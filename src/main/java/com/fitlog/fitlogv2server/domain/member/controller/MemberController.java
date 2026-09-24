@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.member.controller;
 
+import jakarta.validation.Valid;
 import com.fitlog.fitlogv2server.domain.member.dto.MemberResponseDto;
 import com.fitlog.fitlogv2server.domain.member.dto.MemberUpdateRequestDto;
 import com.fitlog.fitlogv2server.domain.member.service.MemberService;
@@ -33,7 +34,7 @@ public class MemberController {
     @PatchMapping("/me")
     public ResponseEntity<MemberResponseDto> updateProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody MemberUpdateRequestDto requestDto) {
+            @Valid @RequestBody MemberUpdateRequestDto requestDto) {
         MemberResponseDto response = memberService.updateProfile(userDetails.getId(), requestDto);
         return ResponseEntity.ok(response);
     }

@@ -86,6 +86,9 @@ public class WorkoutProgramService {
             int exerciseOrder = 0;
             for (WorkoutProgramDto.Request.ExerciseDto exerciseDto : partDto.exercises()) {
                 Workout workout = workoutService.findAccessibleWorkout(exerciseDto.workoutId(), memberId);
+                if (!workout.getWorkoutPart().getId().equals(workoutPart.getId())) {
+                    throw new IllegalArgumentException("운동 '" + workout.getName() + "'은(는) 선택한 부위에 속하지 않습니다.");
+                }
                 WorkoutProgramExercise programExercise = WorkoutProgramExercise.builder()
                         .workoutProgramPart(programPart)
                         .workout(workout)

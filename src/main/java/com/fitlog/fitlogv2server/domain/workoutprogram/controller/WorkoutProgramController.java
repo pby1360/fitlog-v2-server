@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.workoutprogram.controller;
 
+import jakarta.validation.Valid;
 import com.fitlog.fitlogv2server.domain.workoutprogram.WorkoutProgramDto;
 import com.fitlog.fitlogv2server.domain.workoutprogram.facade.WorkoutProgramFacade;
 import com.fitlog.fitlogv2server.global.security.service.CustomUserDetails;
@@ -25,7 +26,7 @@ public class WorkoutProgramController {
     private final WorkoutProgramFacade workoutProgramFacade;
 
     @PostMapping
-    public ResponseEntity<Void> createWorkoutProgram(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody WorkoutProgramDto.Request requestDto) {
+    public ResponseEntity<Void> createWorkoutProgram(@AuthenticationPrincipal CustomUserDetails userDetails, @Valid @RequestBody WorkoutProgramDto.Request requestDto) {
         workoutProgramFacade.createWorkoutProgram(userDetails.getId(), requestDto);
         return ResponseEntity.ok().build();
     }
@@ -34,7 +35,7 @@ public class WorkoutProgramController {
     public ResponseEntity<Void> updateWorkoutProgram(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long programId,
-            @RequestBody WorkoutProgramDto.Request requestDto) {
+            @Valid @RequestBody WorkoutProgramDto.Request requestDto) {
         workoutProgramFacade.updateWorkoutProgram(userDetails.getId(), programId, requestDto);
         return ResponseEntity.ok().build();
     }
