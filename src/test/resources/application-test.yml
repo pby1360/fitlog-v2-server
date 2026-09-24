@@ -1,0 +1,25 @@
+# 통합 테스트 전용 설정. DB 접속 정보는 IntegrationTestSupport 가 임베디드 PostgreSQL로 주입한다.
+spring:
+  datasource:
+    url: jdbc:postgresql://placeholder
+    username: placeholder
+    password: placeholder
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway 마이그레이션 결과가 엔티티와 일치하는지 검증
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client
+            client-secret: test-google-secret
+          kakao:
+            client-id: test-kakao-client
+            client-secret: test-kakao-secret
+
+jwt:
+  # 테스트 전용 키 (64바이트, base64). 운영 키와 무관
+  secret: dGVzdC1vbmx5LWtleS10ZXN0LW9ubHkta2V5LXRlc3Qtb25seS1rZXktdGVzdC1vbmx5LWtleS10ZXN0LW9ubHk=
+  access-token-expiry: 3600
+  refresh-token-expiry: 604800
