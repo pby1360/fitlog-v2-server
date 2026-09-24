@@ -49,7 +49,8 @@ public class WorkoutSessionService {
 
     @Transactional
     public WorkoutSession startSession(Member member, WorkoutSessionDto.StartRequest request) {
-        WorkoutProgram workoutProgram = workoutProgramRepository.findById(request.getWorkoutProgramId())
+        // 본인 소유 프로그램만 허용 (다른 회원의 템플릿을 복사해 오는 IDOR 방지)
+        WorkoutProgram workoutProgram = workoutProgramRepository.findByIdAndMemberId(request.getWorkoutProgramId(), member.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Workout program not found"));
 
         if (workoutProgram.isDeleted()) {
@@ -66,7 +67,7 @@ public class WorkoutSessionService {
         List<WorkoutSessionDto.CustomExerciseRequest> customExercises = request.getCustomExercises();
         if (customExercises != null && !customExercises.isEmpty()) {
             for (WorkoutSessionDto.CustomExerciseRequest customEx : customExercises) {
-                Workout workout = workoutRepository.findById(customEx.getWorkoutId())
+                Workout workout = workoutRepository.findAccessibleById(customEx.getWorkoutId(), member.getId())
                         .orElseThrow(() -> new IllegalArgumentException("Workout not found: " + customEx.getWorkoutId()));
 
                 WorkoutSessionExercise sessionExercise = WorkoutSessionExercise.builder()
@@ -279,7 +280,7 @@ public class WorkoutSessionService {
             throw new IllegalArgumentException("sets는 최소 1개 이상이어야 합니다.");
         }
 
-        Workout workout = workoutRepository.findById(request.getWorkoutId())
+        Workout workout = workoutRepository.findAccessibleById(request.getWorkoutId(), memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
 
         // Shift existing exercises' order to keep ordering consistent
