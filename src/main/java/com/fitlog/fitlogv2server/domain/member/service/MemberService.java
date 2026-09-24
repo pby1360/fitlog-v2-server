@@ -43,7 +43,7 @@ public class MemberService {
     }
 
     /**
-     * 프로필 업데이트 (닉네임, 전화번호, 생년월일, 신장, 체중, 목표, 경력)
+     * 프로필 업데이트 (닉네임, 신장, 체중, 목표, 경력)
      *
      * @param memberId   SecurityContext에서 가져온 사용자 ID
      * @param dto        업데이트 요청 DTO
@@ -54,8 +54,6 @@ public class MemberService {
         Member member = findMemberById(memberId);
         member.updateProfile(
                 dto.getNickname(),
-                dto.getPhone(),
-                dto.getBirthDate(),
                 dto.getGoal(),
                 dto.getExperience()
         );

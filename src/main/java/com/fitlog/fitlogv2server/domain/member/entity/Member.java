@@ -39,10 +39,6 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private String providerId;
 
-    private String phone;
-
-    private String birthDate;
-
     private Integer height;
 
     private Integer weight;
@@ -53,15 +49,13 @@ public class Member extends BaseTimeEntity {
 
     @Builder
     public Member(String email, String nickname, String imageUrl, Role role, Provider provider, String providerId,
-                  String phone, String birthDate, Integer height, Integer weight, String goal, String experience) {
+                  Integer height, Integer weight, String goal, String experience) {
         this.email = email;
         this.nickname = nickname;
         this.imageUrl = imageUrl;
         this.role = role;
         this.provider = provider;
         this.providerId = providerId;
-        this.phone = phone;
-        this.birthDate = birthDate;
         this.height = height;
         this.weight = weight;
         this.goal = goal;
@@ -76,10 +70,8 @@ public class Member extends BaseTimeEntity {
         this.imageUrl = imageUrl;
     }
 
-    public void updateProfile(String nickname, String phone, String birthDate, String goal, String experience) {
+    public void updateProfile(String nickname, String goal, String experience) {
         if (nickname != null) this.nickname = nickname;
-        if (phone != null) this.phone = phone;
-        if (birthDate != null) this.birthDate = birthDate;
         if (goal != null) this.goal = goal;
         if (experience != null) this.experience = experience;
     }

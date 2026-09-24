@@ -15,10 +15,6 @@ public class MemberUpdateRequestDto {
     @Size(min = 1, max = 30)
     @Pattern(regexp = ".*\\S.*", message = "공백만으로 된 닉네임은 사용할 수 없습니다.")
     private String nickname;
-    @Size(max = 20)
-    private String phone;
-    @Pattern(regexp = "^$|^\\d{4}-\\d{2}-\\d{2}$", message = "생년월일은 YYYY-MM-DD 형식이어야 합니다.")
-    private String birthDate;
     @Min(50) @Max(300)
     private Integer height; // cm
     @Min(20) @Max(500)

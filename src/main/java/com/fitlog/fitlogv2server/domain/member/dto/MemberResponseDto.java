@@ -11,8 +11,6 @@ public class MemberResponseDto {
     private String nickname;
     private String imageUrl;
     private String provider;
-    private String phone;
-    private String birthDate;
     private Integer height;
     private Integer weight;
     private String goal;
@@ -28,8 +26,6 @@ public class MemberResponseDto {
         this.nickname = member.getNickname();
         this.imageUrl = member.getImageUrl();
         this.provider = member.getProvider().name();
-        this.phone = member.getPhone();
-        this.birthDate = member.getBirthDate();
         this.height = member.getHeight();
         this.weight = member.getWeight();
         this.goal = member.getGoal();
