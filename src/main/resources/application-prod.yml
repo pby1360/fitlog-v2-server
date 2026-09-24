@@ -87,4 +87,5 @@ logging:
     root: INFO
     com.fitlog: INFO
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
+    # requestId: 오류 응답의 requestId 와 같은 값 (사용자 문의 시 로그 추적용)
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] [%X{requestId:-}] %logger{36} - %msg%n"

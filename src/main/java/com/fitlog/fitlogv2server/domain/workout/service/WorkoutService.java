@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.workout.service;
 
+import com.fitlog.fitlogv2server.global.exception.NotFoundException;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.domain.workout.dto.WorkoutDto;
 import com.fitlog.fitlogv2server.domain.workout.dto.WorkoutPartDto;
@@ -125,13 +126,13 @@ public class WorkoutService {
     @Transactional(readOnly = true)
     public WorkoutPart findWorkoutPartByName(String name) {
         return workoutPartRepository.findByName(name)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 운동 부위입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 운동 부위입니다."));
     }
 
     @Transactional(readOnly = true)
     public Workout findWorkoutByName(String name) {
         return workoutRepository.findByName(name)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 운동입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 운동입니다."));
     }
 
     /**
@@ -140,7 +141,7 @@ public class WorkoutService {
     @Transactional(readOnly = true)
     public WorkoutPart findAccessibleWorkoutPart(Long id, Long memberId) {
         return workoutPartRepository.findAccessibleById(id, memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 운동 부위입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 운동 부위입니다."));
     }
 
     /**
@@ -149,7 +150,7 @@ public class WorkoutService {
     @Transactional(readOnly = true)
     public Workout findAccessibleWorkout(Long id, Long memberId) {
         return workoutRepository.findAccessibleById(id, memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 운동입니다."));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 운동입니다."));
     }
 
     // 참조 중이면 보관(신규 선택에서만 제외, 과거 기록 유지), 아니면 삭제

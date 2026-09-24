@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.workoutsession.service;
 
+import com.fitlog.fitlogv2server.global.exception.NotFoundException;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.domain.workout.entity.Workout;
 import com.fitlog.fitlogv2server.domain.workout.repository.WorkoutRepository;
@@ -55,10 +56,10 @@ public class WorkoutSessionService {
 
         // 본인 소유 프로그램만 허용 (다른 회원의 템플릿을 복사해 오는 IDOR 방지)
         WorkoutProgram workoutProgram = workoutProgramRepository.findByIdAndMemberId(request.getWorkoutProgramId(), member.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Workout program not found"));
+                .orElseThrow(() -> new NotFoundException("운동 프로그램을 찾을 수 없습니다."));
 
         if (workoutProgram.isDeleted()) {
-            throw new IllegalArgumentException("Cannot start a session with a deleted workout program.");
+            throw new NotFoundException("삭제된 운동 프로그램입니다.");
         }
 
         WorkoutSession workoutSession = WorkoutSession.builder()
@@ -72,7 +73,7 @@ public class WorkoutSessionService {
         if (customExercises != null && !customExercises.isEmpty()) {
             for (WorkoutSessionDto.CustomExerciseRequest customEx : customExercises) {
                 Workout workout = workoutRepository.findAccessibleById(customEx.getWorkoutId(), member.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Workout not found: " + customEx.getWorkoutId()));
+                        .orElseThrow(() -> new NotFoundException("존재하지 않는 운동입니다: " + customEx.getWorkoutId()));
 
                 WorkoutSessionExercise sessionExercise = WorkoutSessionExercise.builder()
                         .workoutSession(workoutSession)
@@ -128,7 +129,7 @@ public class WorkoutSessionService {
                 .flatMap(exercise -> exercise.getWorkoutSessionSets().stream())
                 .filter(set -> set.getId().equals(request.getWorkoutSessionSetId()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Workout session set not found"));
+                .orElseThrow(() -> new NotFoundException("세션에서 세트를 찾을 수 없습니다."));
 
         workoutSessionSet.completeSet(request.getActualWeight(), request.getActualReps(), request.getMemo());
         completeIfAllSetsDone(workoutSession);
@@ -259,7 +260,7 @@ public class WorkoutSessionService {
         }
 
         Workout workout = workoutRepository.findAccessibleById(request.getWorkoutId(), memberId)
-                .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 운동입니다."));
 
         // Shift existing exercises' order to keep ordering consistent
         int newOrder = request.getOrder() != null ? request.getOrder() :
@@ -377,7 +378,7 @@ public class WorkoutSessionService {
         return workoutSession.getWorkoutSessionExercises().stream()
                 .filter(e -> e.getId().equals(exerciseId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Workout session exercise not found"));
+                .orElseThrow(() -> new NotFoundException("세션에서 운동을 찾을 수 없습니다."));
     }
 
     private WorkoutSessionSet newSet(WorkoutSessionExercise exercise, int setNumber,

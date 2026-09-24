@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.workoutsession.service;
 
+import com.fitlog.fitlogv2server.global.exception.NotFoundException;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.domain.workout.entity.Workout;
 import com.fitlog.fitlogv2server.domain.workout.entity.WorkoutPart;
@@ -296,7 +297,7 @@ class WorkoutSessionServiceTest {
         ReflectionTestUtils.setField(request, "workoutProgramId", 77L);
 
         assertThatThrownBy(() -> workoutSessionService.startSession(member, request))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NotFoundException.class);
         verify(workoutSessionRepository, never()).save(any(WorkoutSession.class));
     }
 
@@ -308,7 +309,7 @@ class WorkoutSessionServiceTest {
 
         assertThatThrownBy(() -> workoutSessionService.addExercise(
                 MEMBER_ID, SESSION_ID, buildAddExerciseRequest(55L, 2, List.of(buildAddSetRequest(40.0, 10, 60, null)))))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NotFoundException.class);
         assertThat(session.getWorkoutSessionExercises()).hasSize(1);
     }
 

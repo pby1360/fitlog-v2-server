@@ -64,8 +64,30 @@ app:
   cors:
     # CORS 허용 오리진(쉼표 구분). 로컬 개발 기본값 + FRONTEND_URL
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  # 과다 요청 제한 (인스턴스별, 1분 구간). 초과 시 429
+  rate-limit:
+    auth-per-minute: ${RATE_LIMIT_AUTH_PER_MINUTE:60}    # /api/auth/** , 클라이언트 IP 기준
+    write-per-minute: ${RATE_LIMIT_WRITE_PER_MINUTE:120} # 쓰기 API, 회원 기준
 
 # --- 배포 필수 설정 ---
 server:
   port: ${PORT:8080} # Render가 동적으로 할당하는 포트를 받기 위해 필수
   forward-headers-strategy: native # OAuth2 리다이렉트 시 HTTPS 유지를 위해 필수
+
+# --- 운영 관측 ---
+# 헬스체크: /actuator/health 만 공개 (세부 정보 비공개). 그 밖의 actuator 엔드포인트는 노출하지 않는다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    # 모든 로그에 requestId 포함 (오류 응답의 requestId 와 같은 값)
+    level: "%5p [%X{requestId:-}]"

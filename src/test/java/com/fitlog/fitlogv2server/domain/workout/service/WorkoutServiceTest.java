@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.workout.service;
 
+import com.fitlog.fitlogv2server.global.exception.NotFoundException;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.domain.workout.dto.WorkoutDto;
 import com.fitlog.fitlogv2server.domain.workout.entity.Workout;
@@ -46,7 +47,7 @@ class WorkoutServiceTest {
         given(workoutPartRepository.findAccessibleById(5L, MEMBER_ID)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> workoutService.addWorkout(buildWorkoutRequest("인클라인 머신", 5L), member))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NotFoundException.class);
         verify(workoutRepository, never()).save(any(Workout.class));
     }
 
@@ -79,7 +80,7 @@ class WorkoutServiceTest {
         given(workoutPartRepository.findAccessibleById(5L, MEMBER_ID)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> workoutService.deleteWorkoutPart(5L, member))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NotFoundException.class);
         verify(workoutRepository, never()).findAllByWorkoutPartIdAndMemberId(anyLong(), anyLong());
     }
 
@@ -89,7 +90,7 @@ class WorkoutServiceTest {
         given(workoutRepository.findAccessibleById(9L, OTHER_MEMBER_ID)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> workoutService.findAccessibleWorkout(9L, OTHER_MEMBER_ID))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NotFoundException.class);
     }
 
     private Member buildMember(Long id) {

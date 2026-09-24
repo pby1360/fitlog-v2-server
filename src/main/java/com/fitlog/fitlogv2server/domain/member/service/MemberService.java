@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.member.service;
 
+import com.fitlog.fitlogv2server.global.exception.NotFoundException;
 import com.fitlog.fitlogv2server.domain.member.dto.MemberResponseDto;
 import com.fitlog.fitlogv2server.domain.member.dto.MemberUpdateRequestDto;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
@@ -25,7 +26,7 @@ public class MemberService {
      */
     public Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다."));
     }
 
     /**
