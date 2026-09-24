@@ -16,6 +16,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.util.Comparator;
 import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -61,7 +62,9 @@ public class WorkoutProgramDto {
         ) {
             public ProgramPartDto(WorkoutProgramPart programPart) {
                 this(programPart.getId(), programPart.getWorkoutPart().getId(), programPart.getWorkoutPart().getName(), programPart.getOrder(),
-                        programPart.getExercises().stream().map(ProgramExerciseDto::new).toList());
+                        programPart.getExercises().stream()
+                                .sorted(Comparator.comparingInt(WorkoutProgramExercise::getOrder))
+                                .map(ProgramExerciseDto::new).toList());
             }
         }
 
@@ -76,7 +79,9 @@ public class WorkoutProgramDto {
             public ProgramExerciseDto(WorkoutProgramExercise programExercise) {
                 this(programExercise.getId(), programExercise.getWorkout().getId(), programExercise.getWorkout().getName(),
                         programExercise.getWorkout().getWorkoutPart().getName(), programExercise.getOrder(),
-                        programExercise.getSets().stream().map(ProgramSetDto::new).toList());
+                        programExercise.getSets().stream()
+                                .sorted(Comparator.comparing(WorkoutProgramSet::getSetNumber, Comparator.nullsLast(Comparator.naturalOrder())))
+                                .map(ProgramSetDto::new).toList());
             }
         }
 
@@ -96,7 +101,9 @@ public class WorkoutProgramDto {
         public Response(WorkoutProgram program) {
             this(program.getId(), program.getName(), program.getDescription(),
                     program.getCreatedAt().toString().substring(0, 10), // YYYY-MM-DD 형식
-                    program.getParts().stream().map(ProgramPartDto::new).toList());
+                    program.getParts().stream()
+                            .sorted(Comparator.comparingInt(WorkoutProgramPart::getOrder))
+                            .map(ProgramPartDto::new).toList());
         }
     }
 }

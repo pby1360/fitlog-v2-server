@@ -7,14 +7,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "workout_name_part_id_unique",
-                        columnNames = {"name", "workout_part_id"}
-                )
-        }
-)
+import java.time.Instant;
+
+// 이름 유일성은 소유자 범위의 부분 유니크 인덱스로 관리한다 (V5: 공용끼리/같은 회원 안에서만 유일)
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -44,6 +39,9 @@ public class Workout {
     @JoinColumn(name = "member_id", nullable = true)
     private Member member;
 
+    // 보관 시각. 과거 기록·프로그램이 참조 중이라 삭제할 수 없는 개인 운동은 보관 처리해 신규 선택에서만 제외한다.
+    private Instant archivedAt;
+
     @Builder
     public Workout(String name, WorkoutPart workoutPart, Member member) {
         this.name = name;
@@ -71,5 +69,13 @@ public class Workout {
     public void update(String name, WorkoutPart workoutPart) {
         this.name = name;
         setWorkoutPart(workoutPart);
+    }
+
+    public void archive() {
+        this.archivedAt = Instant.now();
+    }
+
+    public boolean isArchived() {
+        return this.archivedAt != null;
     }
 }

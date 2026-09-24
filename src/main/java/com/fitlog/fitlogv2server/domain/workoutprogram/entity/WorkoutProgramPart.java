@@ -3,6 +3,8 @@ package com.fitlog.fitlogv2server.domain.workoutprogram.entity;
 import com.fitlog.fitlogv2server.domain.workout.entity.Workout;
 import com.fitlog.fitlogv2server.domain.workout.entity.WorkoutPart;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLOrder;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,6 +37,9 @@ public class WorkoutProgramPart {
     private int order; // 순서 (1, 2, 3...)
 
     // 하위: 운동 종목 목록
+    // 저장한 순서(orders)대로 조회한다. 컬렉션은 묶음 조회로 N+1 을 줄인다.
+    @SQLOrder("orders ASC, id ASC")
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "workoutProgramPart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkoutProgramExercise> exercises = new ArrayList<>();
 

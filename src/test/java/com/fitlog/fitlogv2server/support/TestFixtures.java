@@ -52,7 +52,7 @@ public class TestFixtures {
 
     /** 시드된 공용 운동 중 서로 다른 n개 */
     public List<Workout> publicWorkouts(int count) {
-        return workoutRepository.findAllByMemberIdOrMemberIsNull(-1L).stream()
+        return workoutRepository.findAllVisible(-1L).stream()
                 .filter(w -> w.getMember() == null)
                 .limit(count)
                 .toList();

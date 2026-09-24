@@ -34,6 +34,9 @@ public class WorkoutSession extends BaseTimeEntity {
     @JoinColumn(name = "workout_program_id")
     private WorkoutProgram workoutProgram;
 
+    // 세션 생성 시점의 프로그램 이름 (이후 프로그램 이름이 바뀌어도 기록 표기는 유지)
+    private String programName;
+
     private ZonedDateTime startTime;
 
     private ZonedDateTime endTime;
@@ -53,6 +56,7 @@ public class WorkoutSession extends BaseTimeEntity {
     public WorkoutSession(Member member, WorkoutProgram workoutProgram, ZonedDateTime startTime, ZonedDateTime endTime, SessionStatus status) {
         this.member = member;
         this.workoutProgram = workoutProgram;
+        this.programName = workoutProgram != null ? workoutProgram.getName() : null;
         this.startTime = startTime;
         this.endTime = endTime;
         this.status = status;
@@ -126,6 +130,12 @@ public class WorkoutSession extends BaseTimeEntity {
     /**
      * 실제 운동 시간(초) = 종료 - 시작 - 총 일시정지. 종료되지 않은 세션은 null.
      */
+    // 스냅샷이 없는 과거 데이터는 현재 프로그램 이름으로 대체한다
+    public String getDisplayProgramName() {
+        if (this.programName != null) return this.programName;
+        return this.workoutProgram != null ? this.workoutProgram.getName() : null;
+    }
+
     public Long getDurationSeconds() {
         if (this.startTime == null || this.endTime == null) {
             return null;

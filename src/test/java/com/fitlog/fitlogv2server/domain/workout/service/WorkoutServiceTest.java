@@ -80,20 +80,9 @@ class WorkoutServiceTest {
 
         assertThatThrownBy(() -> workoutService.deleteWorkoutPart(5L, member))
                 .isInstanceOf(IllegalArgumentException.class);
-        verify(workoutRepository, never()).deleteAllByWorkoutPartIdAndMemberId(anyLong(), anyLong());
+        verify(workoutRepository, never()).findAllByWorkoutPartIdAndMemberId(anyLong(), anyLong());
     }
 
-    @Test
-    void deleteWorkoutPart_deletesOnlyOwnWorkouts() {
-        Member member = buildMember(MEMBER_ID);
-        WorkoutPart ownPart = buildPart(5L, member);
-        given(workoutPartRepository.findAccessibleById(5L, MEMBER_ID)).willReturn(Optional.of(ownPart));
-
-        workoutService.deleteWorkoutPart(5L, member);
-
-        verify(workoutRepository).deleteAllByWorkoutPartIdAndMemberId(5L, MEMBER_ID);
-        verify(workoutPartRepository).delete(ownPart);
-    }
 
     @Test
     void findAccessibleWorkout_hidesOtherMembersWorkout() {

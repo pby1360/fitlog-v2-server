@@ -15,12 +15,15 @@ public class WorkoutDto {
     private String name;
     private String bodyPart;
     private Long bodyPartId;
+    // 본인이 만든 운동이면 true (공용 운동은 수정/삭제 불가). 목록은 공용 + 본인 운동만 담는다.
+    private boolean editable;
 
     public WorkoutDto(Workout workout) {
         this.id = workout.getId();
         this.name = workout.getName();
         this.bodyPart = workout.getWorkoutPart().getName();
         this.bodyPartId = workout.getWorkoutPart().getId();
+        this.editable = workout.getMember() != null;
     }
 
     @Getter

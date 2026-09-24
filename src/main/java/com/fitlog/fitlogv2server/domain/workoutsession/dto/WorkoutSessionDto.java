@@ -161,7 +161,7 @@ public class WorkoutSessionDto {
         public Response(WorkoutSession workoutSession) {
             this.id = workoutSession.getId();
             this.workoutProgramId = workoutSession.getWorkoutProgram().getId();
-            this.workoutProgramName = workoutSession.getWorkoutProgram().getName();
+            this.workoutProgramName = workoutSession.getDisplayProgramName();
             this.startTime = workoutSession.getStartTime();
             this.endTime = workoutSession.getEndTime();
             this.status = workoutSession.getStatus().name();
@@ -189,8 +189,8 @@ public class WorkoutSessionDto {
         public ExerciseResponse(WorkoutSessionExercise exercise) {
             this.id = exercise.getId();
             this.workoutId = exercise.getWorkout().getId();
-            this.workoutName = exercise.getWorkout().getName();
-            this.bodyPart = exercise.getWorkout().getWorkoutPart().getName();
+            this.workoutName = exercise.getDisplayWorkoutName();
+            this.bodyPart = exercise.getDisplayBodyPartName();
             this.order = exercise.getOrder();
             this.skipped = exercise.getSkipped();
             this.startedAt = exercise.getStartedAt();
@@ -219,7 +219,7 @@ public class WorkoutSessionDto {
         public LogSummaryResponse(WorkoutSession workoutSession) {
             this.id = workoutSession.getId();
             this.workoutProgramId = workoutSession.getWorkoutProgram().getId();
-            this.workoutProgramName = workoutSession.getWorkoutProgram().getName();
+            this.workoutProgramName = workoutSession.getDisplayProgramName();
             this.startTime = workoutSession.getStartTime();
             this.endTime = workoutSession.getEndTime();
             this.durationSeconds = workoutSession.getDurationSeconds();
@@ -237,7 +237,7 @@ public class WorkoutSessionDto {
                     .filter(s -> Boolean.TRUE.equals(s.getCompleted()))
                     .count();
             this.bodyParts = exercises.stream()
-                    .map(e -> e.getWorkout().getWorkoutPart().getName())
+                    .map(WorkoutSessionExercise::getDisplayBodyPartName)
                     .distinct()
                     .collect(Collectors.toList());
         }

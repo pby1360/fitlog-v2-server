@@ -161,26 +161,26 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
             @Param("to") ZonedDateTime to);
 
     @Query(value = """
-            SELECT wp.name AS bodyPart, COUNT(wp.id) AS count
+            SELECT COALESCE(wse.body_part_name, wp.name) AS bodyPart, COUNT(*) AS count
             FROM workout_session ws
             JOIN workout_session_exercise wse ON ws.id = wse.workout_session_id
             JOIN workout w ON wse.workout_id = w.id
             JOIN workout_part wp ON w.workout_part_id = wp.id
             WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED'
-            GROUP BY wp.name
+            GROUP BY COALESCE(wse.body_part_name, wp.name)
             ORDER BY count DESC
             """, nativeQuery = true)
     List<BodyPartStatProjection> findBodyPartStats(@Param("memberId") Long memberId);
 
     @Query(value = """
-            SELECT wp.name
+            SELECT COALESCE(wse.body_part_name, wp.name)
             FROM workout_session ws
             JOIN workout_session_exercise wse ON ws.id = wse.workout_session_id
             JOIN workout w ON wse.workout_id = w.id
             JOIN workout_part wp ON w.workout_part_id = wp.id
             WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED'
-            GROUP BY wp.name
-            ORDER BY COUNT(wp.id) DESC
+            GROUP BY COALESCE(wse.body_part_name, wp.name)
+            ORDER BY COUNT(*) DESC
             LIMIT 1
             """, nativeQuery = true)
     String findFavoriteBodyPart(@Param("memberId") Long memberId);
@@ -202,7 +202,7 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
     @Query(value = """
             SELECT
                 ws.id,
-                wp.name AS programName,
+                COALESCE(ws.program_name, wp.name) AS programName,
                 ws.start_time AS startTime,
                 (EXTRACT(EPOCH FROM (ws.end_time - ws.start_time)) - COALESCE(ws.total_paused_seconds, 0)) AS durationSeconds,
                 COUNT(CASE WHEN wss.completed = true THEN 1 END) AS completedSets,
@@ -212,7 +212,7 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
             LEFT JOIN workout_session_exercise wse ON ws.id = wse.workout_session_id
             LEFT JOIN workout_session_set wss ON wse.id = wss.workout_session_exercise_id
             WHERE ws.member_id = :memberId AND ws.status = 'COMPLETED'
-            GROUP BY ws.id, wp.name, ws.start_time, ws.end_time, ws.total_paused_seconds
+            GROUP BY ws.id, ws.program_name, wp.name, ws.start_time, ws.end_time, ws.total_paused_seconds
             ORDER BY ws.start_time DESC
             LIMIT 3
             """, nativeQuery = true)

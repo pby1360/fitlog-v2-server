@@ -3,6 +3,8 @@ package com.fitlog.fitlogv2server.domain.workoutprogram.entity;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLOrder;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,6 +35,9 @@ public class WorkoutProgram extends BaseTimeEntity {
     private LocalDateTime deletedAt;
 
     // 하위: 파트 목록 (Day 1, Day 2...)
+    // 저장한 순서(orders)대로 조회한다. 컬렉션은 묶음 조회로 N+1 을 줄인다.
+    @SQLOrder("orders ASC, id ASC")
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "workoutProgram", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkoutProgramPart> parts = new ArrayList<>();
 

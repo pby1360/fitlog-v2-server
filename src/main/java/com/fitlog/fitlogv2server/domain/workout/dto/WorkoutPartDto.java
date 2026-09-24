@@ -12,10 +12,13 @@ import lombok.NoArgsConstructor;
 public class WorkoutPartDto {
     private Long id;
     private String name;
+    // 본인이 만든 부위면 true (공용 부위는 수정/삭제 불가). 목록은 공용 + 본인 부위만 담는다.
+    private boolean editable;
 
     public WorkoutPartDto(WorkoutPart workoutPart) {
         this.id = workoutPart.getId();
         this.name = workoutPart.getName();
+        this.editable = workoutPart.getMember() != null;
     }
 
     @Getter
