@@ -3,6 +3,7 @@ package com.fitlog.fitlogv2server.global.config;
 import com.fitlog.fitlogv2server.global.security.handler.JwtAuthenticationEntryPoint;
 import com.fitlog.fitlogv2server.global.security.handler.OAuth2AuthenticationFailureHandler;
 import com.fitlog.fitlogv2server.global.security.handler.OAuth2LoginSuccessHandler;
+import com.fitlog.fitlogv2server.global.security.oauth.JdbcOAuth2AuthorizationRequestRepository;
 import com.fitlog.fitlogv2server.global.security.service.CustomOAuth2UserService;
 import com.fitlog.fitlogv2server.global.security.token.JwtAuthenticationFilter; // [추가]
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class SecurityConfig {
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JdbcOAuth2AuthorizationRequestRepository authorizationRequestRepository;
 
     /**
      * CORS 허용 오리진. 쉼표로 구분한다.
@@ -73,6 +75,9 @@ public class SecurityConfig {
 
                 // [4] OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
+                        // 인가 요청(state)을 메모리 세션이 아닌 DB에 저장 (다중 인스턴스/재시작에도 로그인 유지)
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestRepository(authorizationRequestRepository))
                         .successHandler(oAuth2LoginSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                         .userInfoEndpoint(userInfo ->

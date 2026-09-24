@@ -10,7 +10,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "member")
+@Table(name = "member", uniqueConstraints = {
+        // OAuth 계정 식별자 (V4)
+        @UniqueConstraint(name = "uk_member_provider_provider_id", columnNames = {"provider", "provider_id"})
+})
 public class Member extends BaseTimeEntity {
 
     @Id
@@ -48,9 +51,6 @@ public class Member extends BaseTimeEntity {
 
     private String experience;
 
-    @Column(length = 512)
-    private String refreshToken;
-
     @Builder
     public Member(String email, String nickname, String imageUrl, Role role, Provider provider, String providerId,
                   String phone, String birthDate, Integer height, Integer weight, String goal, String experience) {
@@ -74,15 +74,6 @@ public class Member extends BaseTimeEntity {
 
     public void updateImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
-    }
-
-    // 원문이 아닌 해시 값을 저장한다 (AuthService 참고)
-    public void updateRefreshToken(String refreshTokenHash) {
-        this.refreshToken = refreshTokenHash;
-    }
-
-    public void revokeRefreshToken() {
-        this.refreshToken = null;
     }
 
     public void updateProfile(String nickname, String phone, String birthDate, String goal, String experience) {

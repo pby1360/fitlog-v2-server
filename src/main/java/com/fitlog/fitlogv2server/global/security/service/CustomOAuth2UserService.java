@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserServ
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,10 @@ import java.util.Collections;
 @RequiredArgsConstructor
 @Transactional
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+
+    // 실패 핸들러가 사용자 안내 메시지를 고르는 데 쓰는 오류 코드
+    public static final String ERROR_EMAIL_REGISTERED_WITH_OTHER_PROVIDER = "email_registered_with_other_provider";
+    public static final String ERROR_MISSING_PROVIDER_ID = "missing_provider_id";
 
     private final MemberRepository memberRepository;
 
@@ -48,17 +53,27 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         );
     }
 
-    // [핵심 로직] DB에 회원이 있는지 확인하고, 없으면 저장, 있으면 업데이트
-    private Member saveOrUpdate(OAuthAttributes attributes) {
-        Member member = memberRepository.findByEmail(attributes.getEmail())
-                // DB에 있으면: 이미지만 업데이트
+    // [핵심 로직] (공급자, 공급자 계정 ID)로 회원을 찾고, 없으면 가입시킨다
+    Member saveOrUpdate(OAuthAttributes attributes) { // 테스트에서 호출하기 위해 package-private
+        if (attributes.getProviderId() == null) {
+            throw new OAuth2AuthenticationException(new OAuth2Error(ERROR_MISSING_PROVIDER_ID));
+        }
+
+        Member member = memberRepository.findByProviderAndProviderId(attributes.getProvider(), attributes.getProviderId())
+                // 기존 회원: 이미지만 업데이트
                 // 닉네임은 최초 가입 시에만 provider 이름으로 설정하고, 이후에는 사용자가 수정한 값을 보존한다
                 .map(entity -> {
                     entity.updateImageUrl(attributes.getImageUrl());
                     return entity;
                 })
-                // DB에 없으면(최초 가입): toEntity()로 Member 생성
-                .orElse(attributes.toEntity());
+                .orElseGet(() -> {
+                    // 같은 이메일이 다른 공급자 계정으로 이미 가입돼 있으면 자동으로 합치지 않고 거부한다
+                    memberRepository.findByEmail(attributes.getEmail()).ifPresent(existing -> {
+                        throw new OAuth2AuthenticationException(new OAuth2Error(
+                                ERROR_EMAIL_REGISTERED_WITH_OTHER_PROVIDER, existing.getProvider().name(), null));
+                    });
+                    return attributes.toEntity();
+                });
 
         return memberRepository.save(member);
     }
