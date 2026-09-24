@@ -76,8 +76,13 @@ public class Member extends BaseTimeEntity {
         this.imageUrl = imageUrl;
     }
 
-    public void updateRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
+    // 원문이 아닌 해시 값을 저장한다 (AuthService 참고)
+    public void updateRefreshToken(String refreshTokenHash) {
+        this.refreshToken = refreshTokenHash;
+    }
+
+    public void revokeRefreshToken() {
+        this.refreshToken = null;
     }
 
     public void updateProfile(String nickname, String phone, String birthDate, String goal, String experience) {

@@ -21,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -40,11 +41,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 1. Request Header에서 토큰 추출
         String jwt = resolveToken(request);
 
-        // 2. validateToken으로 토큰 유효성 검사
+        // 2. Access Token인지 검사 (Refresh Token·용도 없는 이전 토큰은 일반 API 인증에 사용할 수 없다)
         //    (StringUtils.hasText(jwt)는 jwt가 null이거나 ""이 아닌지 확인)
-        if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
+        Optional<Claims> claims = StringUtils.hasText(jwt) ? tokenProvider.parseAccessToken(jwt) : Optional.empty();
+        if (claims.isPresent()) {
             // 3. 토큰이 유효할 경우 토큰에서 Authentication 객체 가져오기
-            Authentication authentication = getAuthentication(jwt);
+            Authentication authentication = getAuthentication(claims.get());
             // 4. SecurityContext에 Authentication 객체 저장
             SecurityContextHolder.getContext().setAuthentication(authentication);
             log.debug("Security Context에 '{}' 인증 정보를 저장했습니다, uri: {}", authentication.getName(), request.getRequestURI());
@@ -65,21 +67,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     // 토큰에서 인증(Authentication) 객체 생성
-    public Authentication getAuthentication(String accessToken) {
-        // 1. 토큰 복호화
-        Claims claims = tokenProvider.getClaims(accessToken);
-
+    private Authentication getAuthentication(Claims claims) {
         if (claims.get("role") == null) {
             throw new RuntimeException("권한 정보가 없는 토큰입니다."); // [!] 추후 커스텀 예외로
         }
 
-        // 2. 클레임에서 정보 가져오기
+        // 클레임에서 정보 가져오기
         Long memberId = Long.valueOf(claims.getSubject()); // subject에 memberId 저장
         String email = claims.get("email", String.class);
         String nickname = claims.get("nickname", String.class);
         String role = claims.get("role", String.class);
 
-        // 3. CustomUserDetails 객체 만들어서 Authentication 리턴
+        // CustomUserDetails 객체 만들어서 Authentication 리턴
         CustomUserDetails principal = new CustomUserDetails(memberId, email, nickname, role);
 
         return new UsernamePasswordAuthenticationToken(principal, "", principal.getAuthorities());

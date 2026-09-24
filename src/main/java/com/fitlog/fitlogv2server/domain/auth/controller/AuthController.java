@@ -1,10 +1,7 @@
 package com.fitlog.fitlogv2server.domain.auth.controller;
 
-import com.fitlog.fitlogv2server.domain.member.entity.Member;
-import com.fitlog.fitlogv2server.domain.member.repository.MemberRepository;
-import com.fitlog.fitlogv2server.global.security.token.TokenProvider;
+import com.fitlog.fitlogv2server.domain.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,35 +15,21 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final TokenProvider tokenProvider;
-    private final MemberRepository memberRepository;
+    private final AuthService authService;
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
-        String refreshToken = body.get("refreshToken");
-
-        if (refreshToken == null || !tokenProvider.validateToken(refreshToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
-        }
-
-        Member member = memberRepository.findByRefreshToken(refreshToken)
-                .orElse(null);
-
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token not found");
-        }
-
-        String newAccessToken = tokenProvider.createAccessToken(
-                member.getId(), member.getEmail(), member.getNickname(), member.getRole());
-        String newRefreshToken = tokenProvider.createRefreshToken(
-                member.getId(), member.getEmail(), member.getNickname(), member.getRole());
-
-        member.updateRefreshToken(newRefreshToken);
-        memberRepository.save(member);
-
+    public ResponseEntity<Map<String, String>> refresh(@RequestBody Map<String, String> body) {
+        AuthService.TokenPair tokens = authService.reissue(body.get("refreshToken"));
         return ResponseEntity.ok(Map.of(
-                "accessToken", newAccessToken,
-                "refreshToken", newRefreshToken
+                "accessToken", tokens.accessToken(),
+                "refreshToken", tokens.refreshToken()
         ));
+    }
+
+    // Access Token이 만료된 상태에서도 로그아웃할 수 있도록 Refresh Token으로 식별한다
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody(required = false) Map<String, String> body) {
+        authService.logout(body != null ? body.get("refreshToken") : null);
+        return ResponseEntity.noContent().build();
     }
 }

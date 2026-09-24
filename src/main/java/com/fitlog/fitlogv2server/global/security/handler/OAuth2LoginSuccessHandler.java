@@ -1,10 +1,10 @@
 package com.fitlog.fitlogv2server.global.security.handler;
 
 
+import com.fitlog.fitlogv2server.domain.auth.service.AuthService;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.domain.member.repository.MemberRepository;
 import com.fitlog.fitlogv2server.global.security.dto.OAuthAttributes;
-import com.fitlog.fitlogv2server.global.security.token.TokenProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,7 +26,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final TokenProvider tokenProvider;
+    private final AuthService authService;
     private final MemberRepository memberRepository;
 
     @Value("${app.client-url}")
@@ -50,17 +50,13 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("OAuth2 인증 후 사용자를 찾을 수 없습니다."));
 
-        // 5. Access Token, Refresh Token 생성
-        String accessToken = tokenProvider.createAccessToken(member.getId(), email, member.getNickname(), member.getRole());
-        String refreshToken = tokenProvider.createRefreshToken(member.getId(), email, member.getNickname(), member.getRole());
-
-        member.updateRefreshToken(refreshToken);
-        memberRepository.save(member);
+        // 5. Access Token, Refresh Token 생성 (Refresh Token은 해시로 저장됨)
+        AuthService.TokenPair tokens = authService.issueTokens(member);
 
         // 6. 프론트엔드로 리다이렉트 (토큰 및 provider 정보를 쿼리 파라미터로 전달)
         String targetUrl = UriComponentsBuilder.fromUriString(clientUrl + "/auth/callback")
-                .queryParam("accessToken", accessToken)
-                .queryParam("refreshToken", refreshToken)
+                .queryParam("accessToken", tokens.accessToken())
+                .queryParam("refreshToken", tokens.refreshToken())
                 .queryParam("imageUrl", member.getImageUrl())
                 .queryParam("provider", member.getProvider().name())
                 .build().toUriString();
