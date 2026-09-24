@@ -54,7 +54,7 @@ public class DashboardService {
                 .totalWorkouts(workoutSessionRepository.countCompleted(memberId))
                 .totalDurationSeconds(totalDuration != null ? totalDuration : 0L)
                 .totalCompletedSets(totalCompletedSets != null ? totalCompletedSets : 0L)
-                .averageCompletionRate(avgRate != null ? Math.round(avgRate * 10.0) / 10.0 : 0.0)
+                .averageCompletionRate(toPercent(avgRate))
                 .currentStreak(calculateStreak(memberId, zone))
                 .weeklyWorkouts(workoutSessionRepository.countCompletedBetween(memberId, weekStartZdt, weekEndZdt).intValue())
                 .monthlyWorkouts(workoutSessionRepository.countCompletedBetween(memberId, monthStartZdt, monthEndZdt).intValue())
@@ -65,6 +65,15 @@ public class DashboardService {
                 .monthlyStats(buildMonthlyStats(memberId, threeMonthsStartZdt))
                 .recentWorkouts(buildRecentWorkouts(memberId, zone))
                 .build();
+    }
+
+    /**
+     * averageCompletionRate 쿼리는 세션별 완료 비율(0~1)의 평균을 반환한다.
+     * API는 백분율(0~100, 소수 첫째 자리)로 응답한다.
+     */
+    static double toPercent(Double ratio) {
+        if (ratio == null) return 0.0;
+        return Math.round(ratio * 1000.0) / 10.0;
     }
 
     private int calculateStreak(Long memberId, ZoneId zone) {
