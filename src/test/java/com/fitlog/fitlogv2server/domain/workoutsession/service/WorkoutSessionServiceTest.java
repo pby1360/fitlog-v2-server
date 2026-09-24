@@ -69,7 +69,7 @@ class WorkoutSessionServiceTest {
 
         WorkoutProgram program = mock(WorkoutProgram.class);
         given(program.getParts()).willReturn(List.of());
-        given(workoutProgramRepository.findById(anyLong())).willReturn(Optional.of(program));
+        given(workoutProgramRepository.findByIdAndMemberId(anyLong(), anyLong())).willReturn(Optional.of(program));
         given(workoutSessionRepository.save(any(WorkoutSession.class))).willAnswer(inv -> inv.getArgument(0));
 
         WorkoutSessionDto.StartRequest request = new WorkoutSessionDto.StartRequest();
@@ -213,7 +213,7 @@ class WorkoutSessionServiceTest {
     void addExercise_appendsExerciseWithRequestedSets() {
         WorkoutSession session = buildSession(SessionStatus.IN_PROGRESS, 1);
         given(workoutSessionRepository.findById(SESSION_ID)).willReturn(Optional.of(session));
-        given(workoutRepository.findById(12L)).willReturn(Optional.of(buildWorkout()));
+        given(workoutRepository.findAccessibleById(12L, MEMBER_ID)).willReturn(Optional.of(buildWorkout()));
 
         WorkoutSessionDto.AddExerciseRequest request = buildAddExerciseRequest(12L, 2,
                 List.of(buildAddSetRequest(40.0, 10, 60, "첫 세트"), buildAddSetRequest(45.0, 8, 90, null)));
@@ -281,6 +281,36 @@ class WorkoutSessionServiceTest {
                     .isInstanceOf(ResponseStatusException.class)
                     .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
         }
+    }
+
+    @Test
+    void startSession_rejectsProgramOwnedByAnotherMember() {
+        Member member = Member.builder()
+                .email("user@example.com")
+                .nickname("user")
+                .build();
+        ReflectionTestUtils.setField(member, "id", MEMBER_ID);
+        // 다른 회원의 프로그램은 소유자 조건 조회에서 결과가 없다
+        given(workoutProgramRepository.findByIdAndMemberId(77L, MEMBER_ID)).willReturn(Optional.empty());
+
+        WorkoutSessionDto.StartRequest request = new WorkoutSessionDto.StartRequest();
+        ReflectionTestUtils.setField(request, "workoutProgramId", 77L);
+
+        assertThatThrownBy(() -> workoutSessionService.startSession(member, request))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(workoutSessionRepository, never()).save(any(WorkoutSession.class));
+    }
+
+    @Test
+    void addExercise_rejectsWorkoutOwnedByAnotherMember() {
+        WorkoutSession session = buildSession(SessionStatus.IN_PROGRESS, 1);
+        given(workoutSessionRepository.findById(SESSION_ID)).willReturn(Optional.of(session));
+        given(workoutRepository.findAccessibleById(55L, MEMBER_ID)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> workoutSessionService.addExercise(
+                MEMBER_ID, SESSION_ID, buildAddExerciseRequest(55L, 2, List.of(buildAddSetRequest(40.0, 10, 60, null)))))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(session.getWorkoutSessionExercises()).hasSize(1);
     }
 
     private WorkoutSession buildSession(SessionStatus status, int... existingSetNumbers) {
