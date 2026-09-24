@@ -51,9 +51,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     // [핵심 로직] DB에 회원이 있는지 확인하고, 없으면 저장, 있으면 업데이트
     private Member saveOrUpdate(OAuthAttributes attributes) {
         Member member = memberRepository.findByEmail(attributes.getEmail())
-                // DB에 있으면: 이름, 이미지 업데이트
+                // DB에 있으면: 이미지만 업데이트
+                // 닉네임은 최초 가입 시에만 provider 이름으로 설정하고, 이후에는 사용자가 수정한 값을 보존한다
                 .map(entity -> {
-                    entity.updateNickname(attributes.getName());
                     entity.updateImageUrl(attributes.getImageUrl());
                     return entity;
                 })
