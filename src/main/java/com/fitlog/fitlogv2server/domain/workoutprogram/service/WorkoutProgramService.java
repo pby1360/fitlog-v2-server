@@ -32,7 +32,7 @@ public class WorkoutProgramService {
                 .description(requestDto.description())
                 .build();
 
-        addPartsToWorkoutProgram(workoutProgram, requestDto.parts());
+        addPartsToWorkoutProgram(workoutProgram, requestDto.parts(), member.getId());
 
         workoutProgramRepository.save(workoutProgram);
     }
@@ -54,7 +54,7 @@ public class WorkoutProgramService {
 
         // 기존 parts 삭제 후 새로 추가 (orphanRemoval = true 덕분에 자동으로 하위 엔티티 삭제)
         workoutProgram.getParts().clear();
-        addPartsToWorkoutProgram(workoutProgram, requestDto.parts());
+        addPartsToWorkoutProgram(workoutProgram, requestDto.parts(), member.getId());
     }
 
     @Transactional
@@ -72,10 +72,10 @@ public class WorkoutProgramService {
         }
     }
 
-    private void addPartsToWorkoutProgram(WorkoutProgram workoutProgram, List<WorkoutProgramDto.Request.PartDto> partDtos) {
+    private void addPartsToWorkoutProgram(WorkoutProgram workoutProgram, List<WorkoutProgramDto.Request.PartDto> partDtos, Long memberId) {
         int partOrder = 0;
         for (WorkoutProgramDto.Request.PartDto partDto : partDtos) {
-            WorkoutPart workoutPart = workoutService.findWorkoutPartById(partDto.workoutPartId());
+            WorkoutPart workoutPart = workoutService.findAccessibleWorkoutPart(partDto.workoutPartId(), memberId);
             WorkoutProgramPart programPart = WorkoutProgramPart.builder()
                     .workoutProgram(workoutProgram)
                     .workoutPart(workoutPart)
@@ -85,7 +85,7 @@ public class WorkoutProgramService {
 
             int exerciseOrder = 0;
             for (WorkoutProgramDto.Request.ExerciseDto exerciseDto : partDto.exercises()) {
-                Workout workout = workoutService.findWorkoutById(exerciseDto.workoutId());
+                Workout workout = workoutService.findAccessibleWorkout(exerciseDto.workoutId(), memberId);
                 WorkoutProgramExercise programExercise = WorkoutProgramExercise.builder()
                         .workoutProgramPart(programPart)
                         .workout(workout)

@@ -80,14 +80,21 @@ public class Member extends BaseTimeEntity {
         this.refreshToken = refreshToken;
     }
 
-    public void updateProfile(String nickname, String phone, String birthDate,
-                              Integer height, Integer weight, String goal, String experience) {
+    public void updateProfile(String nickname, String phone, String birthDate, String goal, String experience) {
         if (nickname != null) this.nickname = nickname;
         if (phone != null) this.phone = phone;
         if (birthDate != null) this.birthDate = birthDate;
-        if (height != null) this.height = height;
-        if (weight != null) this.weight = weight;
         if (goal != null) this.goal = goal;
         if (experience != null) this.experience = experience;
+    }
+
+    // null이면 값을 삭제한다
+    public void updateHeight(Integer height) {
+        this.height = height;
+    }
+
+    // null이면 값을 삭제한다
+    public void updateWeight(Integer weight) {
+        this.weight = weight;
     }
 }
