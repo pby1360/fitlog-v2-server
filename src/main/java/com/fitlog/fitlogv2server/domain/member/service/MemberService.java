@@ -56,11 +56,11 @@ public class MemberService {
                 dto.getNickname(),
                 dto.getPhone(),
                 dto.getBirthDate(),
-                dto.getHeight(),
-                dto.getWeight(),
                 dto.getGoal(),
                 dto.getExperience()
         );
+        if (dto.isHeightPresent()) member.updateHeight(dto.getHeight());
+        if (dto.isWeightPresent()) member.updateWeight(dto.getWeight());
         long totalWorkoutDays = workoutSessionRepository.countCompleted(memberId);
         long totalCompletedSets = workoutSessionRepository.sumCompletedSetsByMemberId(memberId);
         long totalDurationSeconds = workoutSessionRepository.sumDurationSecondsByMemberId(memberId);
