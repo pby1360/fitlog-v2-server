@@ -1,5 +1,5 @@
 # 1단계: 빌드 스테이지 (JDK 21로 변경)
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /app
 
 # 그래들 빌드에 필요한 파일들 복사
@@ -18,7 +18,7 @@ COPY src src
 RUN ./gradlew clean bootJar -x test --no-daemon
 
 # 2단계: 실행 스테이지 (JRE 21로 변경)
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
 # 빌드 스테이지에서 생성된 jar 파일만 복사
