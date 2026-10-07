@@ -29,6 +29,10 @@ public class WorkoutSessionExercise {
     @JoinColumn(name = "workout_id")
     private Workout workout;
 
+    // 세션 생성 시점의 운동/부위 이름 (이후 종목 이름·부위가 바뀌거나 보관돼도 기록 표기는 유지)
+    private String workoutName;
+    private String bodyPartName;
+
     @Column(name = "`order`")
     private Integer order;
 
@@ -46,8 +50,21 @@ public class WorkoutSessionExercise {
     public WorkoutSessionExercise(WorkoutSession workoutSession, Workout workout, Integer order) {
         this.workoutSession = workoutSession;
         this.workout = workout;
+        if (workout != null) {
+            this.workoutName = workout.getName();
+            this.bodyPartName = workout.getWorkoutPart() != null ? workout.getWorkoutPart().getName() : null;
+        }
         this.order = order;
         this.skipped = false;
+    }
+
+    // 스냅샷이 없는 과거 데이터는 현재 종목/부위 이름으로 대체한다
+    public String getDisplayWorkoutName() {
+        return this.workoutName != null ? this.workoutName : this.workout.getName();
+    }
+
+    public String getDisplayBodyPartName() {
+        return this.bodyPartName != null ? this.bodyPartName : this.workout.getWorkoutPart().getName();
     }
 
     public void addWorkoutSessionSet(WorkoutSessionSet workoutSessionSet) {

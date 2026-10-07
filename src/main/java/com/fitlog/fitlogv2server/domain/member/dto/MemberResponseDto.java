@@ -1,6 +1,7 @@
 package com.fitlog.fitlogv2server.domain.member.dto;
 
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
+import com.fitlog.fitlogv2server.global.common.AppTimeZone;
 import lombok.Getter;
 
 @Getter
@@ -10,8 +11,6 @@ public class MemberResponseDto {
     private String nickname;
     private String imageUrl;
     private String provider;
-    private String phone;
-    private String birthDate;
     private Integer height;
     private Integer weight;
     private String goal;
@@ -27,15 +26,11 @@ public class MemberResponseDto {
         this.nickname = member.getNickname();
         this.imageUrl = member.getImageUrl();
         this.provider = member.getProvider().name();
-        this.phone = member.getPhone();
-        this.birthDate = member.getBirthDate();
         this.height = member.getHeight();
         this.weight = member.getWeight();
         this.goal = member.getGoal();
         this.experience = member.getExperience();
-        this.createdAt = member.getCreatedAt() != null
-                ? member.getCreatedAt().toLocalDate().toString()
-                : null;
+        this.createdAt = AppTimeZone.toKstDateString(member.getCreatedAt()); // 가입일(한국 날짜)
         this.totalWorkoutDays = totalWorkoutDays;
         this.totalCompletedSets = totalCompletedSets;
         this.totalDurationSeconds = totalDurationSeconds;

@@ -4,35 +4,46 @@ import com.fitlog.fitlogv2server.domain.workoutprogram.entity.WorkoutProgram;
 import com.fitlog.fitlogv2server.domain.workoutprogram.entity.WorkoutProgramExercise;
 import com.fitlog.fitlogv2server.domain.workoutprogram.entity.WorkoutProgramPart;
 import com.fitlog.fitlogv2server.domain.workoutprogram.entity.WorkoutProgramSet;
+import com.fitlog.fitlogv2server.global.common.AppTimeZone;
+import com.fitlog.fitlogv2server.global.common.ValidationLimits;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.util.Comparator;
 import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class WorkoutProgramDto {
 
     public record Request(
-            String name,
-            String description,
-            List<PartDto> parts
+            @NotBlank @Size(max = ValidationLimits.MAX_NAME) String name,
+            @Size(max = ValidationLimits.MAX_DESCRIPTION) String description,
+            @NotNull @Size(max = ValidationLimits.MAX_PARTS) List<@Valid PartDto> parts
     ) {
         public record PartDto(
-                Long workoutPartId,
-                List<ExerciseDto> exercises
+                @NotNull Long workoutPartId,
+                @NotNull @Size(max = ValidationLimits.MAX_EXERCISES) List<@Valid ExerciseDto> exercises
         ) {}
 
         public record ExerciseDto(
-                Long workoutId,
-                List<SetDto> sets
+                @NotNull Long workoutId,
+                @NotNull @Size(max = ValidationLimits.MAX_SETS) List<@Valid SetDto> sets
         ) {}
 
         public record SetDto(
-                Integer setNumber,
-                Double weight,
-                Integer reps,
-                Integer restTime,
-                String memo
+                @NotNull @Min(1) Integer setNumber,
+                @DecimalMin("0") @DecimalMax(ValidationLimits.MAX_WEIGHT) Double weight,
+                @NotNull @Min(0) @Max(ValidationLimits.MAX_REPS) Integer reps,
+                @NotNull @Min(0) @Max(ValidationLimits.MAX_REST_SECONDS) Integer restTime,
+                @Size(max = ValidationLimits.MAX_MEMO) String memo
         ) {}
     }
 
@@ -52,7 +63,9 @@ public class WorkoutProgramDto {
         ) {
             public ProgramPartDto(WorkoutProgramPart programPart) {
                 this(programPart.getId(), programPart.getWorkoutPart().getId(), programPart.getWorkoutPart().getName(), programPart.getOrder(),
-                        programPart.getExercises().stream().map(ProgramExerciseDto::new).toList());
+                        programPart.getExercises().stream()
+                                .sorted(Comparator.comparingInt(WorkoutProgramExercise::getOrder))
+                                .map(ProgramExerciseDto::new).toList());
             }
         }
 
@@ -67,7 +80,9 @@ public class WorkoutProgramDto {
             public ProgramExerciseDto(WorkoutProgramExercise programExercise) {
                 this(programExercise.getId(), programExercise.getWorkout().getId(), programExercise.getWorkout().getName(),
                         programExercise.getWorkout().getWorkoutPart().getName(), programExercise.getOrder(),
-                        programExercise.getSets().stream().map(ProgramSetDto::new).toList());
+                        programExercise.getSets().stream()
+                                .sorted(Comparator.comparing(WorkoutProgramSet::getSetNumber, Comparator.nullsLast(Comparator.naturalOrder())))
+                                .map(ProgramSetDto::new).toList());
             }
         }
 
@@ -86,8 +101,10 @@ public class WorkoutProgramDto {
 
         public Response(WorkoutProgram program) {
             this(program.getId(), program.getName(), program.getDescription(),
-                    program.getCreatedAt().toString().substring(0, 10), // YYYY-MM-DD 형식
-                    program.getParts().stream().map(ProgramPartDto::new).toList());
+                    AppTimeZone.toKstDateString(program.getCreatedAt()), // 생성일(한국 날짜, YYYY-MM-DD)
+                    program.getParts().stream()
+                            .sorted(Comparator.comparingInt(WorkoutProgramPart::getOrder))
+                            .map(ProgramPartDto::new).toList());
         }
     }
 }

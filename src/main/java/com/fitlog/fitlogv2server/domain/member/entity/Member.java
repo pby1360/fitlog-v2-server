@@ -10,7 +10,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "member")
+@Table(name = "member", uniqueConstraints = {
+        // OAuth 계정 식별자 (V4)
+        @UniqueConstraint(name = "uk_member_provider_provider_id", columnNames = {"provider", "provider_id"})
+})
 public class Member extends BaseTimeEntity {
 
     @Id
@@ -36,10 +39,6 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private String providerId;
 
-    private String phone;
-
-    private String birthDate;
-
     private Integer height;
 
     private Integer weight;
@@ -48,20 +47,15 @@ public class Member extends BaseTimeEntity {
 
     private String experience;
 
-    @Column(length = 512)
-    private String refreshToken;
-
     @Builder
     public Member(String email, String nickname, String imageUrl, Role role, Provider provider, String providerId,
-                  String phone, String birthDate, Integer height, Integer weight, String goal, String experience) {
+                  Integer height, Integer weight, String goal, String experience) {
         this.email = email;
         this.nickname = nickname;
         this.imageUrl = imageUrl;
         this.role = role;
         this.provider = provider;
         this.providerId = providerId;
-        this.phone = phone;
-        this.birthDate = birthDate;
         this.height = height;
         this.weight = weight;
         this.goal = goal;
@@ -76,18 +70,19 @@ public class Member extends BaseTimeEntity {
         this.imageUrl = imageUrl;
     }
 
-    public void updateRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public void updateProfile(String nickname, String phone, String birthDate,
-                              Integer height, Integer weight, String goal, String experience) {
+    public void updateProfile(String nickname, String goal, String experience) {
         if (nickname != null) this.nickname = nickname;
-        if (phone != null) this.phone = phone;
-        if (birthDate != null) this.birthDate = birthDate;
-        if (height != null) this.height = height;
-        if (weight != null) this.weight = weight;
         if (goal != null) this.goal = goal;
         if (experience != null) this.experience = experience;
+    }
+
+    // null이면 값을 삭제한다
+    public void updateHeight(Integer height) {
+        this.height = height;
+    }
+
+    // null이면 값을 삭제한다
+    public void updateWeight(Integer weight) {
+        this.weight = weight;
     }
 }

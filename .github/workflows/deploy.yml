@@ -3,6 +3,8 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [main]
+  pull_request:             # PR에서는 테스트만 실행 (배포 안 함)
+    branches: [main, dev]
   workflow_dispatch:        # 필요 시 수동 실행(롤백 등)
 
 env:
@@ -13,8 +15,42 @@ env:
   RUNTIME_SA: fitlog-run@fitlog-505315.iam.gserviceaccount.com
 
 jobs:
-  deploy:
+  # ── 품질 게이트: 테스트가 실패하면 배포하지 않는다 ──
+  # 통합 테스트는 임베디드 PostgreSQL로 Flyway 마이그레이션 + 엔티티 검증까지 수행한다.
+  test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Run tests
+        run: |
+          chmod +x ./gradlew
+          ./gradlew test --no-daemon
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/test
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    # 배포는 한 번에 하나씩, 시작 순서대로 실행한다 (오래된 커밋이 최신 배포를 덮어쓰지 않도록)
+    concurrency:
+      group: deploy-cloud-run
+      cancel-in-progress: false
 
     # WIF 사용에 필수. 이게 없으면 GitHub이 OIDC 토큰을 발급하지 않는다.
     permissions:
@@ -23,23 +59,40 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── 안전장치: push 배포는 main의 최신 커밋일 때만 진행 ──
+      # 대기 중에 더 새로운 커밋이 들어왔다면 그 실행이 배포하도록 이 실행은 건너뛴다.
+      - name: Skip if not latest main
+        id: latest
+        run: |
+          git fetch origin main --quiet
+          if [ "${{ github.event_name }}" = "push" ] && [ "$(git rev-parse origin/main)" != "${GITHUB_SHA}" ]; then
+            echo "::notice::main에 더 새로운 커밋이 있어 이 배포를 건너뜁니다."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       # ── 인증: 키 파일 없이 OIDC 토큰을 임시 자격증명으로 교환 ──
       - name: Authenticate to Google Cloud
+        if: steps.latest.outputs.skip != 'true'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.DEPLOY_SA }}
 
       - name: Set up gcloud
+        if: steps.latest.outputs.skip != 'true'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
+        if: steps.latest.outputs.skip != 'true'
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
       # ── 빌드 ──
       # 태그를 커밋 SHA로 → 어느 커밋이 배포됐는지 추적 가능, 롤백 지점 명확
       - name: Build image
+        if: steps.latest.outputs.skip != 'true'
         run: |
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}"
           docker build --platform linux/amd64 \
@@ -50,6 +103,7 @@ jobs:
       # 과거에 .dockerignore 누락으로 평문 secret이 이미지에 담긴 적이 있다.
       # 사람이 매번 확인할 수 없으니 파이프라인이 대신 막는다.
       - name: Verify no secret files in image
+        if: steps.latest.outputs.skip != 'true'
         run: |
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}:${GITHUB_SHA}"
           FOUND=$(docker run --rm --entrypoint sh "$IMAGE" \
@@ -62,17 +116,19 @@ jobs:
           echo "OK - application-local / .bak 미포함"
 
       # ── 안전장치: prod 프로파일 설정 누락 검사 ──
-      # application-prod.yml 이 없으면 Spring이 조용히 넘어가면서
-      # ddl-auto 가 validate → update 로 떨어져 운영 DB 스키마가 자동 변경된다.
+      # application-prod.yml 이 없으면 Spring이 조용히 넘어가면서 운영 전용 설정
+      # (커넥션 풀, Flyway baseline 등)이 빠진 채로 기동된다.
       - name: Verify prod profile is packaged
+        if: steps.latest.outputs.skip != 'true'
         run: |
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}:${GITHUB_SHA}"
           docker run --rm --entrypoint sh "$IMAGE" \
             -c "unzip -l app.jar | grep -q 'application-prod.yml'" \
-            || { echo "::error::application-prod.yml 누락 — ddl-auto가 update로 떨어질 위험"; exit 1; }
+            || { echo "::error::application-prod.yml 누락 — 운영 전용 설정 없이 기동될 위험"; exit 1; }
           echo "OK - application-prod.yml 포함됨"
 
       - name: Push image
+        if: steps.latest.outputs.skip != 'true'
         run: |
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}"
           docker push "${IMAGE}:${GITHUB_SHA}"
@@ -82,6 +138,7 @@ jobs:
       # --image 만 지정한다. 시크릿·환경변수·인스턴스 상한 등 기존 설정은 그대로 유지된다.
       # (여기서 --set-secrets 등을 다시 나열하면 하나만 빠뜨려도 설정이 통째로 덮어써진다)
       - name: Deploy to Cloud Run
+        if: steps.latest.outputs.skip != 'true'
         run: |
           gcloud run deploy "${SERVICE}" \
             --image="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE}:${GITHUB_SHA}" \
@@ -90,6 +147,7 @@ jobs:
             --quiet
 
       - name: Show service URL
+        if: steps.latest.outputs.skip != 'true'
         run: |
           echo "### 배포 완료 :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "- 커밋: \`${GITHUB_SHA}\`" >> $GITHUB_STEP_SUMMARY

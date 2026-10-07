@@ -3,8 +3,13 @@ package com.fitlog.fitlogv2server.global.config;
 import com.fitlog.fitlogv2server.global.security.handler.JwtAuthenticationEntryPoint;
 import com.fitlog.fitlogv2server.global.security.handler.OAuth2AuthenticationFailureHandler;
 import com.fitlog.fitlogv2server.global.security.handler.OAuth2LoginSuccessHandler;
+import com.fitlog.fitlogv2server.global.security.oauth.JdbcOAuth2AuthorizationRequestRepository;
 import com.fitlog.fitlogv2server.global.security.service.CustomOAuth2UserService;
 import com.fitlog.fitlogv2server.global.security.token.JwtAuthenticationFilter; // [추가]
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fitlog.fitlogv2server.global.logging.RequestIdFilter;
+import com.fitlog.fitlogv2server.global.ratelimit.FixedWindowRateLimiter;
+import com.fitlog.fitlogv2server.global.ratelimit.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +24,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,6 +39,14 @@ public class SecurityConfig {
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JdbcOAuth2AuthorizationRequestRepository authorizationRequestRepository;
+    private final ObjectMapper objectMapper;
+
+    // 과다 요청 제한 (인스턴스별 1분 구간)
+    @Value("${app.rate-limit.auth-per-minute:60}")
+    private int authRequestsPerMinute;
+    @Value("${app.rate-limit.write-per-minute:120}")
+    private int writeRequestsPerMinute;
 
     /**
      * CORS 허용 오리진. 쉼표로 구분한다.
@@ -73,6 +88,9 @@ public class SecurityConfig {
 
                 // [4] OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
+                        // 인가 요청(state)을 메모리 세션이 아닌 DB에 저장 (다중 인스턴스/재시작에도 로그인 유지)
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestRepository(authorizationRequestRepository))
                         .successHandler(oAuth2LoginSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                         .userInfoEndpoint(userInfo ->
@@ -83,6 +101,11 @@ public class SecurityConfig {
         // [5] (신규) JWT 필터 추가
         //    : UsernamePasswordAuthenticationFilter 앞에 JwtAuthenticationFilter를 추가
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        // [6] 과다 요청 제한: 인증 결과(회원)를 알아야 하므로 JWT 필터 뒤에 둔다
+        http.addFilterAfter(new RateLimitFilter(
+                new FixedWindowRateLimiter(authRequestsPerMinute, Duration.ofMinutes(1), Clock.systemUTC()),
+                new FixedWindowRateLimiter(writeRequestsPerMinute, Duration.ofMinutes(1), Clock.systemUTC()),
+                objectMapper), JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -94,6 +117,8 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        // 프론트가 오류 문의 시 requestId 를 읽을 수 있도록 노출
+        configuration.setExposedHeaders(List.of(RequestIdFilter.HEADER, "Retry-After"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

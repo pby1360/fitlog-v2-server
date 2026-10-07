@@ -20,8 +20,16 @@ spring:
       idle-timeout: 300000
       max-lifetime: 900000
 
+  # --- Flyway ---
+  # 기존 운영 DB(이력 테이블 없음)는 첫 배포 시 V1(기준선)으로 등록만 하고 V2부터 적용한다.
+  # 이력 테이블이 생긴 뒤에는 이 옵션이 동작하지 않는다. 운영 외 환경에서는 켜지 않는다.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 1
+
   jpa:
-    defer-datasource-initialization: true
     show-sql: false
     hibernate:
       ddl-auto: validate
@@ -79,4 +87,5 @@ logging:
     root: INFO
     com.fitlog: INFO
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
+    # requestId: 오류 응답의 requestId 와 같은 값 (사용자 문의 시 로그 추적용)
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] [%X{requestId:-}] %logger{36} - %msg%n"

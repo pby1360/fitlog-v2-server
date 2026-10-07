@@ -1,5 +1,7 @@
 package com.fitlog.fitlogv2server.global.common;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 
 /**
@@ -9,6 +11,11 @@ import java.time.ZoneId;
 public final class AppTimeZone {
 
     public static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+    // 저장된 시각을 한국 날짜(YYYY-MM-DD)로 변환한다. null 이면 null.
+    public static String toKstDateString(Instant instant) {
+        return instant != null ? LocalDate.ofInstant(instant, KST).toString() : null;
+    }
 
     private AppTimeZone() {
     }

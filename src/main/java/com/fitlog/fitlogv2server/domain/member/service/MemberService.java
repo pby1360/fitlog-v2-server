@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.member.service;
 
+import com.fitlog.fitlogv2server.global.exception.NotFoundException;
 import com.fitlog.fitlogv2server.domain.member.dto.MemberResponseDto;
 import com.fitlog.fitlogv2server.domain.member.dto.MemberUpdateRequestDto;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
@@ -25,7 +26,7 @@ public class MemberService {
      */
     public Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다."));
     }
 
     /**
@@ -43,7 +44,7 @@ public class MemberService {
     }
 
     /**
-     * 프로필 업데이트 (닉네임, 전화번호, 생년월일, 신장, 체중, 목표, 경력)
+     * 프로필 업데이트 (닉네임, 신장, 체중, 목표, 경력)
      *
      * @param memberId   SecurityContext에서 가져온 사용자 ID
      * @param dto        업데이트 요청 DTO
@@ -54,13 +55,11 @@ public class MemberService {
         Member member = findMemberById(memberId);
         member.updateProfile(
                 dto.getNickname(),
-                dto.getPhone(),
-                dto.getBirthDate(),
-                dto.getHeight(),
-                dto.getWeight(),
                 dto.getGoal(),
                 dto.getExperience()
         );
+        if (dto.isHeightPresent()) member.updateHeight(dto.getHeight());
+        if (dto.isWeightPresent()) member.updateWeight(dto.getWeight());
         long totalWorkoutDays = workoutSessionRepository.countCompleted(memberId);
         long totalCompletedSets = workoutSessionRepository.sumCompletedSetsByMemberId(memberId);
         long totalDurationSeconds = workoutSessionRepository.sumDurationSecondsByMemberId(memberId);

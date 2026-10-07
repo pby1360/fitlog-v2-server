@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.workout.controller;
 
+import jakarta.validation.Valid;
 import com.fitlog.fitlogv2server.domain.workout.dto.WorkoutDto;
 import com.fitlog.fitlogv2server.domain.workout.dto.WorkoutPartDto;
 import com.fitlog.fitlogv2server.domain.workout.facade.WorkoutFacade;
@@ -26,13 +27,13 @@ public class WorkoutController {
     }
 
     @PostMapping("/parts")
-    public ResponseEntity<Void> addWorkoutPart(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody WorkoutPartDto.Request request) {
+    public ResponseEntity<Void> addWorkoutPart(@AuthenticationPrincipal CustomUserDetails userDetails, @Valid @RequestBody WorkoutPartDto.Request request) {
         workoutFacade.addWorkoutPart(request, userDetails.getId());
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/parts/{workoutPartId}")
-    public ResponseEntity<Void> updateWorkoutPart(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long workoutPartId, @RequestBody WorkoutPartDto.Request request) {
+    public ResponseEntity<Void> updateWorkoutPart(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long workoutPartId, @Valid @RequestBody WorkoutPartDto.Request request) {
         workoutFacade.updateWorkoutPart(workoutPartId, request, userDetails.getId());
         return ResponseEntity.ok().build();
     }
@@ -49,13 +50,13 @@ public class WorkoutController {
     }
 
     @PostMapping("/workouts")
-    public ResponseEntity<Void> addWorkout(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody WorkoutDto.Request request) {
+    public ResponseEntity<Void> addWorkout(@AuthenticationPrincipal CustomUserDetails userDetails, @Valid @RequestBody WorkoutDto.Request request) {
         workoutFacade.addWorkout(request, userDetails.getId());
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/workouts/{workoutId}")
-    public ResponseEntity<Void> updateWorkout(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long workoutId, @RequestBody WorkoutDto.Request request) {
+    public ResponseEntity<Void> updateWorkout(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long workoutId, @Valid @RequestBody WorkoutDto.Request request) {
         workoutFacade.updateWorkout(workoutId, request, userDetails.getId());
         return ResponseEntity.ok().build();
     }

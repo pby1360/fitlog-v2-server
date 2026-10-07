@@ -2,6 +2,7 @@ package com.fitlog.fitlogv2server.domain.workoutprogram.entity;
 
 import com.fitlog.fitlogv2server.domain.workout.entity.Workout; // 중요: 마스터 엔티티 import
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,6 +35,9 @@ public class WorkoutProgramExercise {
     private int order; // 운동 순서 (1. 벤치 -> 2. 인클라인...)
 
     // 하위: 목표 세트 목록
+    // 세트 번호 순서대로 조회한다
+    @OrderBy("setNumber ASC, id ASC")
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "workoutProgramExercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkoutProgramSet> sets = new ArrayList<>();
 

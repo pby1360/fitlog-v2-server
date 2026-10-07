@@ -1,5 +1,6 @@
 package com.fitlog.fitlogv2server.domain.workoutprogram.service;
 
+import com.fitlog.fitlogv2server.global.exception.NotFoundException;
 import com.fitlog.fitlogv2server.domain.member.entity.Member;
 import com.fitlog.fitlogv2server.domain.workout.entity.Workout;
 import com.fitlog.fitlogv2server.domain.workout.entity.WorkoutPart;
@@ -32,39 +33,33 @@ public class WorkoutProgramService {
                 .description(requestDto.description())
                 .build();
 
-        addPartsToWorkoutProgram(workoutProgram, requestDto.parts());
+        addPartsToWorkoutProgram(workoutProgram, requestDto.parts(), member.getId());
 
         workoutProgramRepository.save(workoutProgram);
     }
 
     @Transactional
     public void updateWorkoutProgram(Long programId, WorkoutProgramDto.Request requestDto, Member member) {
-        WorkoutProgram workoutProgram = workoutProgramRepository.findById(programId)
-                .orElseThrow(() -> new IllegalArgumentException("WorkoutProgram not found with id: " + programId));
-
-        if (!workoutProgram.getMember().getId().equals(member.getId())) {
-            throw new IllegalArgumentException("You do not have permission to update this workout program.");
-        }
+        // 다른 회원의 프로그램은 없는 것과 동일하게 404
+        WorkoutProgram workoutProgram = workoutProgramRepository.findByIdAndMemberId(programId, member.getId())
+                .orElseThrow(() -> new NotFoundException("운동 프로그램을 찾을 수 없습니다."));
 
         if (workoutProgram.isDeleted()) {
-            throw new IllegalArgumentException("Cannot update a deleted workout program.");
+            throw new NotFoundException("삭제된 운동 프로그램입니다.");
         }
 
         workoutProgram.update(requestDto.name(), requestDto.description());
 
         // 기존 parts 삭제 후 새로 추가 (orphanRemoval = true 덕분에 자동으로 하위 엔티티 삭제)
         workoutProgram.getParts().clear();
-        addPartsToWorkoutProgram(workoutProgram, requestDto.parts());
+        addPartsToWorkoutProgram(workoutProgram, requestDto.parts(), member.getId());
     }
 
     @Transactional
     public void deleteWorkoutProgram(Long programId, Member member) {
-        WorkoutProgram workoutProgram = workoutProgramRepository.findById(programId)
-                .orElseThrow(() -> new IllegalArgumentException("WorkoutProgram not found with id: " + programId));
-
-        if (!workoutProgram.getMember().getId().equals(member.getId())) {
-            throw new IllegalArgumentException("You do not have permission to delete this workout program.");
-        }
+        // 다른 회원의 프로그램은 없는 것과 동일하게 404
+        WorkoutProgram workoutProgram = workoutProgramRepository.findByIdAndMemberId(programId, member.getId())
+                .orElseThrow(() -> new NotFoundException("운동 프로그램을 찾을 수 없습니다."));
 
         // 물리 삭제 대신 소프트삭제: 운동 세션이 프로그램을 참조하고 있어 FK 제약 위반을 방지하고 이력을 보존한다.
         if (!workoutProgram.isDeleted()) {
@@ -72,10 +67,10 @@ public class WorkoutProgramService {
         }
     }
 
-    private void addPartsToWorkoutProgram(WorkoutProgram workoutProgram, List<WorkoutProgramDto.Request.PartDto> partDtos) {
+    private void addPartsToWorkoutProgram(WorkoutProgram workoutProgram, List<WorkoutProgramDto.Request.PartDto> partDtos, Long memberId) {
         int partOrder = 0;
         for (WorkoutProgramDto.Request.PartDto partDto : partDtos) {
-            WorkoutPart workoutPart = workoutService.findWorkoutPartById(partDto.workoutPartId());
+            WorkoutPart workoutPart = workoutService.findAccessibleWorkoutPart(partDto.workoutPartId(), memberId);
             WorkoutProgramPart programPart = WorkoutProgramPart.builder()
                     .workoutProgram(workoutProgram)
                     .workoutPart(workoutPart)
@@ -85,7 +80,10 @@ public class WorkoutProgramService {
 
             int exerciseOrder = 0;
             for (WorkoutProgramDto.Request.ExerciseDto exerciseDto : partDto.exercises()) {
-                Workout workout = workoutService.findWorkoutById(exerciseDto.workoutId());
+                Workout workout = workoutService.findAccessibleWorkout(exerciseDto.workoutId(), memberId);
+                if (!workout.getWorkoutPart().getId().equals(workoutPart.getId())) {
+                    throw new IllegalArgumentException("운동 '" + workout.getName() + "'은(는) 선택한 부위에 속하지 않습니다.");
+                }
                 WorkoutProgramExercise programExercise = WorkoutProgramExercise.builder()
                         .workoutProgramPart(programPart)
                         .workout(workout)

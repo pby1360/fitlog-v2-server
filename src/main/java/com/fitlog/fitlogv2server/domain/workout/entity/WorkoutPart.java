@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +21,8 @@ public class WorkoutPart {
     private Long id;
 
     // 예: "가슴", "등", "하체", "어깨", "이두", "삼두", "복근"
-    @Column(nullable = false, unique = true)
+    // 이름 유일성은 소유자 범위의 부분 유니크 인덱스로 관리한다 (V5)
+    @Column(nullable = false)
     private String name;
 
     /**
@@ -31,6 +33,9 @@ public class WorkoutPart {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = true)
     private Member member;
+
+    // 보관 시각. 프로그램·운동이 참조 중이라 삭제할 수 없는 개인 부위는 보관 처리한다.
+    private Instant archivedAt;
 
     /**
      * [1 : N 관계 설정]
@@ -49,5 +54,13 @@ public class WorkoutPart {
 
     public void updateName(String name) {
         this.name = name;
+    }
+
+    public void archive() {
+        this.archivedAt = Instant.now();
+    }
+
+    public boolean isArchived() {
+        return this.archivedAt != null;
     }
 }

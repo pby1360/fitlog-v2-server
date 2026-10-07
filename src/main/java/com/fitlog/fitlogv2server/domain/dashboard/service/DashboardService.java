@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +53,7 @@ public class DashboardService {
                 .totalWorkouts(workoutSessionRepository.countCompleted(memberId))
                 .totalDurationSeconds(totalDuration != null ? totalDuration : 0L)
                 .totalCompletedSets(totalCompletedSets != null ? totalCompletedSets : 0L)
-                .averageCompletionRate(avgRate != null ? Math.round(avgRate * 10.0) / 10.0 : 0.0)
+                .averageCompletionRate(toPercent(avgRate))
                 .currentStreak(calculateStreak(memberId, zone))
                 .weeklyWorkouts(workoutSessionRepository.countCompletedBetween(memberId, weekStartZdt, weekEndZdt).intValue())
                 .monthlyWorkouts(workoutSessionRepository.countCompletedBetween(memberId, monthStartZdt, monthEndZdt).intValue())
@@ -67,15 +66,21 @@ public class DashboardService {
                 .build();
     }
 
-    private int calculateStreak(Long memberId, ZoneId zone) {
-        List<Timestamp> startTimes = workoutSessionRepository.findCompletedStartTimes(memberId);
-        if (startTimes == null || startTimes.isEmpty()) return 0;
+    /**
+     * averageCompletionRate 쿼리는 세션별 완료 비율(0~1)의 평균을 반환한다.
+     * API는 백분율(0~100, 소수 첫째 자리)로 응답한다.
+     */
+    static double toPercent(Double ratio) {
+        if (ratio == null) return 0.0;
+        return Math.round(ratio * 1000.0) / 10.0;
+    }
 
-        Set<LocalDate> dates = startTimes.stream()
-                .map(ts -> {
-                    // Convert SQL Timestamp -> Instant -> ZonedDateTime in the requested zone
-                    return ts.toInstant().atZone(zone).toLocalDate();
-                })
+    private int calculateStreak(Long memberId, ZoneId zone) {
+        List<String> workoutDates = workoutSessionRepository.findCompletedWorkoutDatesKst(memberId);
+        if (workoutDates == null || workoutDates.isEmpty()) return 0;
+
+        Set<LocalDate> dates = workoutDates.stream()
+                .map(LocalDate::parse)
                 .collect(Collectors.toSet());
 
         LocalDate today = LocalDate.now(zone);
