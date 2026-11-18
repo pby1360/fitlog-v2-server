@@ -1,0 +1,54 @@
+name: Notify FitLog docs after code merge
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for a docs sync authorization
+        id: sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          if grep -Eiq 'Docs-Sync-(Kind|PR|Head):' <<< "$PR_TITLE"$'\n'"$PR_BODY"; then
+            exit 0
+          fi
+          trailers=$(gh api "repos/$GITHUB_REPOSITORY/commits/$MERGE_SHA" --jq '.commit.message' | git interpret-trailers --parse)
+          if grep -qx 'Docs-Sync-Kind: implementation' <<< "$trailers"; then
+            printf 'enabled=true\n' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create docs dispatch token
+        if: steps.sync.outputs.enabled == 'true'
+        id: app
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.FITLOG_DOCS_DISPATCH_APP_ID }}
+          private-key: ${{ secrets.FITLOG_DOCS_DISPATCH_APP_PRIVATE_KEY }}
+          owner: pby1360
+          repositories: fitlog-v2-docs
+          permission-contents: write
+
+      - name: Notify the docs repository
+        if: steps.sync.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          CODE_PR: ${{ github.event.pull_request.number }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          set -euo pipefail
+          jq -n --arg repository "$GITHUB_REPOSITORY" --argjson number "$CODE_PR" --arg sha "$MERGE_SHA" \
+            '{event_type:"fitlog-code-merged",client_payload:{code_repository:$repository,code_number:$number,merge_sha:$sha}}' \
+            | gh api --method POST repos/pby1360/fitlog-v2-docs/dispatches --input -

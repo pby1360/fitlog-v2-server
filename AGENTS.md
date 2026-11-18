@@ -5,7 +5,8 @@
 1. [문서 관리 규칙](https://github.com/pby1360/fitlog-v2-docs/blob/main/AGENTS.md), [현재 상태](https://github.com/pby1360/fitlog-v2-docs/blob/main/status/CURRENT_STATUS.md), [백로그](https://github.com/pby1360/fitlog-v2-docs/blob/main/status/BACKLOG.md)를 읽는다. [기능 목록](https://github.com/pby1360/fitlog-v2-docs/blob/main/features/README.md)에서 해당 PRD·Tech Spec과 완료 조건, 관련 Issue·ADR을 찾는다.
 2. 문서 저장소의 원격 `main`을 기준으로 확인한다. 같은 작업 환경에 문서 체크아웃이 있으면 원격 기준 커밋과 대조한다. 체크아웃이 없어도 공식 GitHub 링크를 사용하며, 기준 문서와 코드가 어긋나면 확인한 커밋과 근거를 기록한다.
 3. 요구사항이나 공개 API 계약, 데이터 모델·마이그레이션 정책, 인증·보안, 장기 아키텍처를 변경해야 하면 영향과 대안, 호환성·검증 계획을 제시하고 해당 변경의 사용자 승인을 기다린다. 승인된 설계 안의 수정과 검증은 요청 범위에서 진행한다.
-4. 승인된 설계 변경은 관련 공식 문서와 ADR에 연결한다. 공식 문서 저장소가 읽기 전용인 작업에서는 필요한 문서 갱신과 출처를 코드 PR에 기록한다. 구현 완료 표시는 실제로 확인한 동작과 검사 범위에 근거한다.
+4. 코드 변경마다 문서 영향을 판단한다. 영향받는 Tech Spec·API·아키텍처를 갱신하고 CURRENT_STATUS와 BACKLOG에 검사 근거와 남은 항목을 남긴다. 개발 이력은 한국 시간 날짜의 `history/` 항목에 추가한다. 문서가 필요 없으면 코드 PR에 이유를 남긴다.
+5. 문서가 필요한 경우 독립 브랜치에 Docs PR을 하나 만들고 두 PR을 상호 연결한다. Docs PR에는 코드 저장소, PR 번호, 기준 SHA를 기록한다. 문서 저장소가 사용자 요청에서 읽기 전용이면 필요한 변경을 코드 PR에 명시한다. [문서 동기화 절차](https://github.com/pby1360/fitlog-v2-docs/blob/main/operations/DOCS_SYNC.md)
 
 ## 아키텍처 및 코딩 표준
 
@@ -25,4 +26,5 @@
 - 원격 `main`을 기준으로 저장소별 작업 브랜치를 사용한다. 기존 작업과 변경을 보존한다. 여러 저장소를 수정하는 요청에서는 검증과 Draft PR을 저장소마다 관리하고 의존하는 PR을 서로 연결한다.
 - 코드 변경은 [`$fitlog-loop`](.agents/skills/fitlog-loop/SKILL.md)로 진행한다. 저장소 루트에서 호출해 해당 저장소의 지침과 검증 명령을 사용한다.
 - 자체 검토 후 요청에 포함된 Draft PR을 만든다. 본문에 백로그 또는 Issue, 관련 PRD·Tech Spec, 변경 요약, 검증 명령·결과, 남은 항목을 기록한다. 배포 잡을 수동 실행하지 않는다.
-- `main` 직접 수정과 푸시를 금지한다. 사용자 승인 없이 병합하지 않는다.
+- 코드 PR은 사용자 승인 후 수동 병합한다. 구현 동기화만 담긴 Docs PR은 승인된 병합 커밋이 지정한 문서 SHA로 검증한 뒤 자동 병합할 수 있다. 요구사항, 보안 정책, 제품 범위와 아키텍처 결정은 별도 승인을 받는다. [자동 병합 기준](https://github.com/pby1360/fitlog-v2-docs/blob/main/operations/DOCS_SYNC.md)
+- `main` 직접 수정과 푸시를 금지한다.
