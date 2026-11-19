@@ -19,12 +19,12 @@
 - 저장소 루트에서 Java 21과 비루트 실행 계정을 사용한다. `src/test/java`의 단위·통합 테스트를 확인한다. `IntegrationTestSupport`의 `test` 프로필은 내장 PostgreSQL과 Flyway를 사용한다. 테스트 설정은 `src/test/resources/application-test.yml`을 따른다.
 - 기본 검증은 `./gradlew test --no-daemon`이다. 실패를 좁힐 때 `./gradlew test --tests '*WorkoutSessionIntegrationTest' --no-daemon`처럼 관련 클래스를 선택할 수 있다. 최종 검증은 필터 없이 전체를 실행한다. 빌드·패키징 변경에는 `./gradlew build --no-daemon`도 확인한다. 의존성이 캐시에 준비된 경우 `--offline`을 사용할 수 있다.
 - `build/test-results/test/` 및 `build/reports/tests/test/`에서 실행 범위와 실패·건너뛴 테스트를 대조한다. 테스트 삭제·비활성화, `-x test`, 필터 적용으로 실패를 숨기지 않는다. 기본 브랜치에서 재현되는 기존 실패나 환경 차단은 근거와 함께 기록한다.
-- [워크플로](.github/workflows/deploy.yml)는 `main`·`dev` 대상 PR에서 Gradle 테스트를 실행한다. 운영 DB·운영 계정·배포 환경에 접근하거나 배포를 실행하지 않는다. 테스트에는 로컬 데이터와 테스트 자격증명만 사용하고 비밀정보를 저장소·PR·로그에 노출하지 않는다.
+- [워크플로](.github/workflows/deploy.yml)는 `main`·`dev` 대상 PR과 `main` Push에서 Gradle 테스트를 실행한다. Flyway 마이그레이션이 포함되면 PR에 기존 스키마와의 호환성, 전진 배포 및 롤백 영향을 기록한다. 운영 DB·운영 계정·배포 환경에 접근하거나 배포를 실행하지 않는다. 테스트에는 로컬 데이터와 테스트 자격증명만 사용하고 비밀정보를 저장소·PR·로그에 노출하지 않는다.
 
 ## Git 및 PR
 
 - 원격 `main`을 기준으로 저장소별 작업 브랜치를 사용한다. 기존 작업과 변경을 보존한다. 여러 저장소를 수정하는 요청에서는 검증과 Draft PR을 저장소마다 관리하고 의존하는 PR을 서로 연결한다.
 - 코드 변경은 [`$fitlog-loop`](.agents/skills/fitlog-loop/SKILL.md)로 진행한다. 저장소 루트에서 호출해 해당 저장소의 지침과 검증 명령을 사용한다.
-- 자체 검토 후 요청에 포함된 Draft PR을 만든다. 본문에 백로그 또는 Issue, 관련 PRD·Tech Spec, 변경 요약, 검증 명령·결과, 남은 항목을 기록한다. 배포 잡을 수동 실행하지 않는다.
+- 자체 검토 후 요청에 포함된 Draft PR을 만든다. 본문에 백로그 또는 Issue, 관련 PRD·Tech Spec, 변경 요약, 검증 명령·결과, 남은 항목을 기록한다. Draft PR의 GitHub Actions 결과를 확인해 기록한다. 기능 변경·버그 수정의 커밋과 병합 메시지에 `[skip ci]` 등 CI 생략 문구를 추가하지 않는다.
 - 코드 PR은 사용자 승인 후 수동 병합한다. 구현 동기화만 담긴 Docs PR은 승인된 병합 커밋이 지정한 문서 SHA로 검증한 뒤 자동 병합할 수 있다. 요구사항, 보안 정책, 제품 범위와 아키텍처 결정은 별도 승인을 받는다. [자동 병합 기준](https://github.com/pby1360/fitlog-v2-docs/blob/main/operations/DOCS_SYNC.md)
-- `main` 직접 수정과 푸시를 금지한다.
+- `main` 직접 수정과 푸시를 금지한다. 운영 배포는 사용자 승인 후 `main`에 병합된 배포 대상 변경에서 GitHub Actions가 수행한다. 에이전트는 운영 배포나 `workflow_dispatch`를 직접 실행하지 않는다. [배포 정책](https://github.com/pby1360/fitlog-v2-docs/blob/main/operations/DEPLOYMENT.md)
