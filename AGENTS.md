@@ -8,6 +8,12 @@
 4. 코드 변경마다 문서 영향을 판단한다. 영향받는 Tech Spec·API·아키텍처를 갱신하고 CURRENT_STATUS와 BACKLOG에 검사 근거와 남은 항목을 남긴다. 개발 이력은 한국 시간 날짜의 `history/` 항목에 추가한다. 문서가 필요 없으면 코드 PR에 이유를 남긴다.
 5. 문서가 필요한 경우 독립 브랜치에 Docs PR을 하나 만들고 두 PR을 상호 연결한다. Docs PR에는 코드 저장소, PR 번호, 기준 SHA를 기록한다. 문서 저장소가 사용자 요청에서 읽기 전용이면 필요한 변경을 코드 PR에 명시한다. [문서 동기화 절차](https://github.com/pby1360/fitlog-v2-docs/blob/main/operations/DOCS_SYNC.md)
 
+## 승인 대기·차단 대응 (Codex 적용)
+
+- 코드 변경 전 `$fitlog-loop`의 **승인 대기·차단 진단** 규칙을 따른다. 기술 정보 부족, 제품·운영 정책, 법적 검토, 승인, 접근 제한, 기존 실행 미확인 사유를 구분하고 가능한 읽기 전용 조사·근거·대안을 먼저 제시한다. [공식 개발 절차](https://github.com/pby1360/fitlog-v2-docs/blob/main/operations/DEVELOPMENT_WORKFLOW.md#승인-대기-중-차단-진단과-의사결정-지원)
+- **조사 요청은 구현 승인과 다르다.** 승인 없이는 TASKS 선점, 코드·정책 변경, PR 생성, Cloud 실행/재실행, 병합 또는 배포를 수행하지 않는다. 기존 Task ID·PR·Cloud 상태를 교차 확인하고 미확인 항목은 그대로 보고한다.
+- 사용자 승인 후에는 Docs `main`의 최신 Task 상태·승인 SHA·선점 근거를 다시 확인하고 기존 개발 루프로 진입한다. 기존 테스트·수정 최대 5회, 코드 Draft PR 및 사용자 수동 병합 규칙은 유지한다.
+
 ## 아키텍처 및 코딩 표준
 
 - Java 21, Spring Boot 3.5, Gradle Wrapper를 사용한다. 기능 코드는 `src/main/java/com/fitlog/fitlogv2server/domain/`의 해당 패키지에 두고 공통 설정·보안·예외는 `global/`의 기존 구성에 맞춘다. [백엔드 설계](https://github.com/pby1360/fitlog-v2-docs/blob/main/architecture/BACKEND.md)
