@@ -1,5 +1,14 @@
 [
   {
+    "name": "keep-fitlog-server-recovery-tags",
+    "action": { "type": "Keep" },
+    "condition": {
+      "tagState": "tagged",
+      "tagPrefixes": ["recovery-"],
+      "packageNamePrefixes": ["fitlog-server"]
+    }
+  },
+  {
     "name": "keep-recent-versions",
     "action": { "type": "Keep" },
     "mostRecentVersions": {
